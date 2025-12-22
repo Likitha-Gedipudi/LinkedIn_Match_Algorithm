@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Data - exclude large files (too big for GitHub, generate locally or download from Kaggle)
+data/raw/*.json
+data/raw/*.csv
+data/processed/*.csv
+data/processed/*.parquet
+data/models/*.pkl
+data/models/*.pt
+data/logs/*.log
+*.log
+
+# Keep small datasets and metadata only
+!data/processed/conversation_starters.csv
+!data/processed/skills_network.csv
+!data/processed/*_top_profiles.csv
+!data/processed/metadata*.json
+!data/models/*.joblib
+
+# Configuration
+.env
+config/config.yaml
+!config/config.example.yaml
+
+# Jupyter - keep notebooks for Kaggle
+.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Documentation
+docs/_build/
+
+# Other
+*.log
+.DS_Store

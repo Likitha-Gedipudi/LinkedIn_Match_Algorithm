@@ -1,0 +1,29 @@
+{
+  "generation_date": "2025-12-21T18:40:56.265346",
+  "total_profiles": 50000,
+  "total_pairs": 500000,
+  "total_conversation_starters": 90,
+  "total_skills": 74,
+  "red_flags_detected": 0,
+  "hidden_gems_found": 0,
+  "avg_compatibility_score": 36.457695460000004,
+  "high_value_pairs": 0,
+  "seniority_distribution": {
+    "senior": 12577,
+    "mid": 12509,
+    "entry": 12461,
+    "executive": 12453
+  },
+  "top_industries": {
+    "Consulting": 3748,
+    "Energy": 3666,
+    "Manufacturing": 3608,
+    "Technology": 3601,
+    "Media": 3595,
+    "E-commerce": 3587,
+    "Healthcare": 3572,
+    "Real Estate": 3530,
+    "Finance": 3526,
+    "Telecommunications": 3522
+  }
+}

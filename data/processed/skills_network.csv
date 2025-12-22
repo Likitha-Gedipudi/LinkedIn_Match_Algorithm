@@ -1,0 +1,75 @@
+skill_name,supply_count,demand_count,supply_demand_ratio,rarity_score,avg_seniority,top_industries,total_mentions
+job opportunities,0,14813,0.0,90,mid,Various,14813
+partnerships,0,14968,0.0,90,mid,Various,14968
+hiring,0,15043,0.0,90,mid,Various,15043
+funding,0,15080,0.0,90,mid,Various,15080
+network connections,0,15153,0.0,90,mid,Various,15153
+business advice,0,14971,0.0,90,mid,Various,14971
+career guidance,0,15019,0.0,90,mid,Various,15019
+technical expertise,0,15043,0.0,90,mid,Various,15043
+clients,0,14880,0.0,90,mid,Various,14880
+mentorship,0,15030,0.0,90,mid,Various,15030
+Pandas,11095,0,inf,50,executive,"E-commerce, Healthcare, Entertainment",11095
+UI/UX Design,11226,0,inf,50,executive,"Energy, Healthcare, Finance",11226
+Microservices,11213,0,inf,50,executive,"E-commerce, Consulting, Manufacturing",11213
+SQL,11172,0,inf,50,executive,"Technology, Consulting, Energy",11172
+NLP,11172,0,inf,50,executive,"Consulting, Energy, Manufacturing",11172
+Business Development,10986,0,inf,50,executive,"E-commerce, Consulting, Manufacturing",10986
+Spark,11015,0,inf,50,executive,"Manufacturing, Consulting, Technology",11015
+User Research,11275,0,inf,50,executive,"Consulting, E-commerce, Technology",11275
+Ruby,11330,0,inf,50,executive,"Consulting, Entertainment, Education",11330
+InVision,11347,0,inf,50,executive,"E-commerce, Real Estate, Energy",11347
+Vue.js,11152,0,inf,50,executive,"Energy, Consulting, Manufacturing",11152
+Kubernetes,11061,0,inf,50,executive,"Energy, Real Estate, Manufacturing",11061
+Product Management,11227,0,inf,50,executive,"Manufacturing, Energy, Media",11227
+PyTorch,11186,0,inf,50,executive,"Consulting, Media, Energy",11186
+TypeScript,11292,0,inf,50,executive,"Technology, Healthcare, Consulting",11292
+Java,11482,0,inf,50,executive,"Energy, Consulting, Manufacturing",11482
+R,11149,0,inf,50,executive,"Consulting, Manufacturing, Technology",11149
+Flask,11125,0,inf,50,executive,"Media, Real Estate, Manufacturing",11125
+Deep Learning,11134,0,inf,50,executive,"Consulting, Media, E-commerce",11134
+Data Science,11174,0,inf,50,executive,"Consulting, Energy, Real Estate",11174
+DevOps,11120,0,inf,50,executive,"Consulting, Finance, Technology",11120
+CI/CD,11088,0,inf,50,executive,"Consulting, E-commerce, Technology",11088
+Scala,11529,0,inf,50,executive,"Telecommunications, Real Estate, Energy",11529
+Terraform,11178,0,inf,50,executive,"Consulting, Healthcare, Technology",11178
+TensorFlow,11279,0,inf,50,executive,"Manufacturing, Consulting, Telecommunications",11279
+Strategy,11103,0,inf,50,executive,"Media, Consulting, Technology",11103
+Django,11131,0,inf,50,executive,"Manufacturing, Consulting, Technology",11131
+Figma,11175,0,inf,50,executive,"Consulting, Manufacturing, Energy",11175
+Computer Vision,11152,0,inf,50,executive,"E-commerce, Media, Manufacturing",11152
+C#,11345,0,inf,50,executive,"Consulting, Finance, E-commerce",11345
+AWS,11181,0,inf,50,executive,"Real Estate, Consulting, E-commerce",11181
+Express.js,11050,0,inf,50,executive,"Consulting, Technology, Energy",11050
+React,11062,0,inf,50,executive,"Technology, Healthcare, Telecommunications",11062
+JavaScript,11368,0,inf,50,executive,"Healthcare, Consulting, E-commerce",11368
+Operations,11105,0,inf,50,executive,"Media, Energy, Manufacturing",11105
+Rust,11247,0,inf,50,executive,"Consulting, Energy, E-commerce",11247
+Next.js,11098,0,inf,50,executive,"Consulting, E-commerce, Healthcare",11098
+PHP,11292,0,inf,50,executive,"E-commerce, Technology, Manufacturing",11292
+Machine Learning,11223,0,inf,50,executive,"Consulting, Energy, E-commerce",11223
+NumPy,11265,0,inf,50,executive,"Telecommunications, Education, Manufacturing",11265
+Go,11468,0,inf,50,executive,"Consulting, Manufacturing, Technology",11468
+Analytics,11161,0,inf,50,executive,"E-commerce, Consulting, Media",11161
+Adobe XD,11214,0,inf,50,executive,"Consulting, E-commerce, Manufacturing",11214
+Big Data,11164,0,inf,50,executive,"Manufacturing, Technology, Consulting",11164
+Kotlin,11144,0,inf,50,executive,"Technology, Consulting, Finance",11144
+Sales,11122,0,inf,50,executive,"Consulting, Finance, Manufacturing",11122
+Python,11259,0,inf,50,executive,"Energy, Manufacturing, Consulting",11259
+Photoshop,11198,0,inf,50,executive,"Consulting, Real Estate, Media",11198
+Node.js,11152,0,inf,50,executive,"Energy, Real Estate, Consulting",11152
+Google Cloud,11311,0,inf,50,executive,"Consulting, Finance, Energy",11311
+Scikit-learn,11068,0,inf,50,executive,"Energy, Consulting, Media",11068
+Sketch,11433,0,inf,50,executive,"E-commerce, Consulting, Energy",11433
+FastAPI,11102,0,inf,50,executive,"Consulting, E-commerce, Technology",11102
+Azure,11329,0,inf,50,executive,"Consulting, Telecommunications, Manufacturing",11329
+Svelte,10999,0,inf,50,executive,"Finance, E-commerce, Manufacturing",10999
+Prototyping,11258,0,inf,50,executive,"Energy, Healthcare, Finance",11258
+Finance,11013,0,inf,50,executive,"Consulting, E-commerce, Healthcare",11013
+C++,11417,0,inf,50,executive,"Manufacturing, Finance, Consulting",11417
+NoSQL,11257,0,inf,50,executive,"Consulting, Finance, Retail",11257
+Marketing,11373,0,inf,50,executive,"Consulting, E-commerce, Energy",11373
+Angular,11153,0,inf,50,executive,"Technology, Consulting, Energy",11153
+Illustrator,11089,0,inf,50,executive,"E-commerce, Consulting, Manufacturing",11089
+Docker,11194,0,inf,50,executive,"Consulting, Manufacturing, Education",11194
+Swift,11338,0,inf,50,executive,"Energy, Manufacturing, Consulting",11338

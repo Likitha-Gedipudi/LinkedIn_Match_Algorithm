@@ -1,0 +1,241 @@
+# LinkedIn Professional Matching System Configuration
+
+# Application Settings
+app:
+  name: "LinkedIn Professional Matching System"
+  version: "1.0.0"
+  environment: "development"  # development, staging, production
+  debug: true
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+
+# Database Configuration
+database:
+  # PostgreSQL for production
+  postgres:
+    host: "localhost"
+    port: 5432
+    database: "linkedin_match"
+    user: "postgres"
+    password: "your_password"
+    pool_size: 10
+    max_overflow: 20
+  
+  # Redis for caching
+  redis:
+    host: "localhost"
+    port: 6379
+    db: 0
+    password: null
+    ttl: 3600  # seconds
+
+# Scraper Configuration
+scrapers:
+  # LinkedIn Scraper (Public Data Only)
+  linkedin:
+    enabled: true
+    rate_limit: 10  # requests per minute
+    max_profiles: 10000
+    timeout: 30
+    retry_attempts: 3
+    retry_delay: 5
+    use_proxy: false
+    proxy_list: []
+    user_agents:
+      - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+      - "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    delay_between_requests: 2  # seconds
+    respect_robots_txt: true
+    public_only: true  # Only scrape publicly accessible data
+    
+  # GitHub Scraper
+  github:
+    enabled: true
+    api_token: "your_github_token"  # GitHub Personal Access Token
+    rate_limit: 30
+    max_profiles: 5000
+    timeout: 15
+    
+  # Company Data Scraper
+  companies:
+    enabled: true
+    sources:
+      - "crunchbase"  # Requires API key
+      - "clearbit"    # Requires API key
+      - "public_databases"
+    rate_limit: 20
+    max_companies: 5000
+    
+  # Job Postings Scraper
+  jobs:
+    enabled: true
+    sources:
+      - "linkedin_jobs"
+      - "indeed"
+      - "glassdoor"
+    rate_limit: 15
+    max_postings: 10000
+
+# Data Processing
+data:
+  raw_data_path: "data/raw"
+  processed_data_path: "data/processed"
+  batch_size: 1000
+  num_workers: 4
+  validation_enabled: true
+  
+  # Profile Processing
+  profiles:
+    min_fields_required: 5
+    require_skills: true
+    require_experience: true
+    deduplication: true
+    
+  # Synthetic Data Generation
+  synthetic:
+    enabled: true
+    generation_count: 10000
+    quality_level: "high"  # low, medium, high
+    seed: 42
+
+# Feature Engineering
+features:
+  # Skill Features
+  skills:
+    skill_taxonomy: "data/taxonomies/skills.json"
+    embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
+    complementarity_weight: 0.40
+    
+  # Network Features
+  network:
+    max_degrees: 3  # Degrees of separation to analyze
+    centrality_metrics: ["degree", "betweenness", "eigenvector"]
+    network_value_weight: 0.30
+    
+  # Career Alignment Features
+  career:
+    experience_gap_optimal: 3  # years for mentorship
+    same_industry_bonus: 10
+    adjacent_industry_bonus: 5
+    alignment_weight: 0.20
+    
+  # Geographic Features
+  geographic:
+    same_city_bonus: 15
+    same_region_bonus: 5
+    remote_penalty: -5
+    weight: 0.10
+
+# Model Configuration
+models:
+  # Compatibility Model
+  compatibility:
+    model_type: "neural_network"  # neural_network, gradient_boosting, ensemble
+    architecture:
+      input_dim: 128
+      hidden_layers: [256, 128, 64]
+      dropout: 0.3
+      activation: "relu"
+    training:
+      batch_size: 128
+      epochs: 100
+      learning_rate: 0.001
+      optimizer: "adam"
+      loss: "mse"
+      early_stopping_patience: 10
+    
+  # Ranking Model
+  ranking:
+    model_type: "learning_to_rank"
+    algorithm: "lambdamart"
+    num_trees: 500
+    learning_rate: 0.1
+    
+  # Red Flag Detection
+  red_flags:
+    model_type: "random_forest"
+    n_estimators: 200
+    max_depth: 15
+    
+  # Hidden Gem Detection
+  hidden_gems:
+    model_type: "isolation_forest"
+    contamination: 0.1
+    
+  # Model Paths
+  save_path: "data/models"
+  versioning: true
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  reload: false
+  
+  # Authentication
+  auth:
+    enabled: true
+    jwt_secret: "your-secret-key-change-in-production"
+    jwt_algorithm: "HS256"
+    access_token_expire: 60  # minutes
+    
+  # Rate Limiting
+  rate_limit:
+    enabled: true
+    requests_per_minute: 100
+    burst: 20
+    
+  # CORS
+  cors:
+    enabled: true
+    origins:
+      - "http://localhost:3000"
+      - "https://yourdomain.com"
+    
+  # Documentation
+  docs:
+    enabled: true
+    url: "/docs"
+    redoc_url: "/redoc"
+
+# Monitoring & Logging
+monitoring:
+  # Prometheus Metrics
+  prometheus:
+    enabled: true
+    port: 9090
+    
+  # Sentry Error Tracking
+  sentry:
+    enabled: false
+    dsn: "your-sentry-dsn"
+    
+  # Logging
+  logging:
+    level: "INFO"
+    format: "json"  # json, text
+    log_to_file: true
+    log_file: "data/logs/app.log"
+    rotation: "100 MB"
+    retention: "30 days"
+
+# Dataset Export
+export:
+  formats: ["csv", "parquet", "json"]
+  compression: "gzip"
+  include_metadata: true
+  kaggle_ready: true
+  
+  # Output files
+  profiles_file: "data/processed/profiles.csv"
+  compatibility_file: "data/processed/compatibility_pairs.csv"
+  skills_network_file: "data/processed/skills_network.csv"
+  metadata_file: "data/processed/metadata.json"
+
+# Feature Flags
+features_flags:
+  synthetic_data_generation: true
+  real_time_scoring: true
+  batch_processing: true
+  api_caching: true
+  model_explainability: true

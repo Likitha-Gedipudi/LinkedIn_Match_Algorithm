@@ -1,0 +1,27 @@
+{
+  "total_profiles": 50000,
+  "total_pairs": 4999890,
+  "avg_compatibility_score": 36.64398457966075,
+  "sources": {
+    "synthetic": 50000
+  },
+  "seniority_distribution": {
+    "entry": 12609,
+    "mid": 12505,
+    "senior": 12503,
+    "executive": 12383
+  },
+  "top_industries": {
+    "Consulting": 3665,
+    "Healthcare": 3613,
+    "Education": 3609,
+    "Energy": 3604,
+    "Transportation": 3600,
+    "Entertainment": 3595,
+    "Media": 3579,
+    "E-commerce": 3577,
+    "Real Estate": 3567,
+    "Finance": 3566
+  },
+  "generation_timestamp": "2025-12-20T17:39:08.483471"
+}

@@ -1,0 +1,18 @@
+{
+  "training_date": "2025-12-21T20:39:46.496095",
+  "models": {
+    "red_flag_classifier": {
+      "status": "failed",
+      "error": "index 1 is out of bounds for axis 1 with size 1"
+    },
+    "compatibility_scorer": {
+      "status": "success",
+      "path": "data/models/compatibility_scorer.joblib",
+      "model_type": "gradient_boosting"
+    },
+    "connection_recommender": {
+      "status": "ready",
+      "note": "No training needed - uses pre-computed scores"
+    }
+  }
+}
