@@ -1,0 +1,195 @@
+"""
+FastAPI application for LinkedIn compatibility scoring.
+"""
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import joblib
+import pandas as pd
+from pathlib import Path
+from typing import List
+
+from .schemas import (
+    CompatibilityRequest,
+    CompatibilityResponse,
+    BatchScoreRequest,
+    BatchScoreResponse,
+    HealthResponse
+)
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="LinkedIn Professional Matching API",
+    description="API for predicting professional networking compatibility",
+    version="1.0.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Load trained model
+MODEL_PATH = Path(__file__).parent.parent.parent / "data" / "models" / "compatibility_scorer.joblib"
+model = None
+
+@app.on_event("startup")
+async def load_model():
+    """Load the trained model on startup."""
+    global model
+    try:
+        model = joblib.load(MODEL_PATH)
+        print(f"Model loaded successfully from {MODEL_PATH}")
+    except Exception as e:
+        print(f"Error loading model: {e}")
+
+
+@app.get("/", response_model=HealthResponse)
+async def root():
+    """Root endpoint."""
+    return {
+        "status": "online",
+        "message": "LinkedIn Professional Matching API",
+        "model_loaded": model is not None
+    }
+
+
+@app.get("/health", response_model=HealthResponse)
+async def health():
+    """Health check endpoint."""
+    return {
+        "status": "healthy" if model is not None else "degraded",
+        "message": "API is running",
+        "model_loaded": model is not None
+    }
+
+
+@app.post("/api/v1/compatibility", response_model=CompatibilityResponse)
+async def calculate_compatibility(request: CompatibilityRequest):
+    """
+    Calculate compatibility score between two profiles.
+    
+    Args:
+        request: Contains profile features
+        
+    Returns:
+        Compatibility score and explanation
+    """
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+    
+    try:
+        # Prepare features for prediction
+        features = pd.DataFrame([{
+            'skill_match_score': request.skill_match_score,
+            'skill_complementarity_score': request.skill_complementarity_score,
+            'network_value_a_to_b': request.network_value_a_to_b,
+            'network_value_b_to_a': request.network_value_b_to_a,
+            'career_alignment_score': request.career_alignment_score,
+            'experience_gap': request.experience_gap,
+            'industry_match': request.industry_match,
+            'geographic_score': request.geographic_score,
+            'seniority_match': request.seniority_match,
+        }])
+        
+        # Predict compatibility score
+        score = float(model.predict(features)[0])
+        
+        return {
+            "compatibility_score": round(score, 2),
+            "recommendation": _get_recommendation(score),
+            "explanation": _generate_explanation(request, score)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
+
+
+@app.post("/api/v1/batch-score", response_model=BatchScoreResponse)
+async def batch_score(request: BatchScoreRequest):
+    """
+    Calculate compatibility scores for multiple profile pairs.
+    
+    Args:
+        request: Contains list of profile feature sets
+        
+    Returns:
+        List of compatibility scores
+    """
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+    
+    try:
+        results = []
+        
+        for item in request.pairs:
+            features = pd.DataFrame([{
+                'skill_match_score': item.skill_match_score,
+                'skill_complementarity_score': item.skill_complementarity_score,
+                'network_value_a_to_b': item.network_value_a_to_b,
+                'network_value_b_to_a': item.network_value_b_to_a,
+                'career_alignment_score': item.career_alignment_score,
+                'experience_gap': item.experience_gap,
+                'industry_match': item.industry_match,
+                'geographic_score': item.geographic_score,
+                'seniority_match': item.seniority_match,
+            }])
+            
+            score = float(model.predict(features)[0])
+            
+            results.append({
+                "pair_id": item.pair_id,
+                "compatibility_score": round(score, 2),
+                "recommendation": _get_recommendation(score)
+            })
+        
+        return {"results": results}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Batch prediction error: {str(e)}")
+
+
+def _get_recommendation(score: float) -> str:
+    """Generate recommendation based on score."""
+    if score >= 80:
+        return "Highly Recommended - Excellent mutual benefit potential"
+    elif score >= 60:
+        return "Recommended - Good compatibility"
+    elif score >= 40:
+        return "Consider - Moderate compatibility"
+    else:
+        return "Not Recommended - Limited mutual benefit"
+
+
+def _generate_explanation(request: CompatibilityRequest, score: float) -> str:
+    """Generate human-readable explanation."""
+    explanations = []
+    
+    if request.skill_complementarity_score > 70:
+        explanations.append("Strong skill complementarity")
+    
+    if request.career_alignment_score > 70:
+        explanations.append("Good career stage alignment")
+    
+    if request.network_value_a_to_b > 60 or request.network_value_b_to_a > 60:
+        explanations.append("Valuable network connections")
+    
+    if request.industry_match > 80:
+        explanations.append("Same industry")
+    
+    if request.geographic_score > 80:
+        explanations.append("Geographic proximity")
+    
+    if not explanations:
+        explanations.append("Limited mutual benefit factors")
+    
+    return " | ".join(explanations)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
