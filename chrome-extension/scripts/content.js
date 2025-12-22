@@ -334,20 +334,27 @@ async function scanAndProcessCards() {
  */
 async function injectInlineScoreForCard(card, profileId, profileName, nameElement, headline = '') {
   try {
-    // Remove any existing inline badges from name area
-    const oldBadges = card.querySelectorAll('.linkedin-match-inline-score');
-    oldBadges.forEach(badge => {
-      if (badge.parentElement !== card) {
-        badge.remove();
-      }
-    });
+    // Remove any existing badges
+    const oldBadges = card.querySelectorAll('.linkedin-match-badge-container, .linkedin-match-inline-score');
+    oldBadges.forEach(badge => badge.remove());
     
-    // Find or create badge container as a separate row at the bottom
-    let badgeContainer = card.querySelector('.linkedin-match-badge-container');
-    if (!badgeContainer) {
-      badgeContainer = document.createElement('div');
-      badgeContainer.className = 'linkedin-match-badge-container';
-      // Insert at the end of the card (not positioned absolute)
+    // Find the button container (Accept/Ignore buttons)
+    const buttonContainer = card.querySelector(
+      '.invitation-card__action-container, ' +
+      '[data-control-name="invite_card_actions"], ' +
+      '.mn-connection-card__action-container, ' +
+      'footer'
+    );
+    
+    // Create badge container
+    const badgeContainer = document.createElement('div');
+    badgeContainer.className = 'linkedin-match-badge-container';
+    
+    // Insert BEFORE the button container
+    if (buttonContainer) {
+      buttonContainer.parentNode.insertBefore(badgeContainer, buttonContainer);
+    } else {
+      // Fallback: append to card
       card.appendChild(badgeContainer);
     }
     
