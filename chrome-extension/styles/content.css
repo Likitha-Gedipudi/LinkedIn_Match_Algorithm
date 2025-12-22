@@ -254,22 +254,26 @@
   margin-left: 8px;
 }
 
-/* Badge Container - positioned in bottom-right of card */
+/* Badge Container - separate row at bottom of card */
 .linkedin-match-badge-container {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  z-index: 100;
-  pointer-events: auto;
   display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 16px;
+  margin-top: 8px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
   gap: 8px;
+  pointer-events: auto;
+  z-index: 100;
 }
 
-/* For invitation cards specifically - avoid button area */
+/* For invitation cards - ensure it appears below content */
 li.mn-invitation-list__card .linkedin-match-badge-container,
 [data-control-name="invite_card"] .linkedin-match-badge-container {
-  bottom: 60px; /* Above the Accept/Ignore buttons */
-  right: 12px;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 0 0 8px 8px;
 }
 
 /* Clickable badge styling */

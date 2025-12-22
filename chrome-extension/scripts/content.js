@@ -334,12 +334,20 @@ async function scanAndProcessCards() {
  */
 async function injectInlineScoreForCard(card, profileId, profileName, nameElement, headline = '') {
   try {
-    // Find or create badge container in bottom-right of card
+    // Remove any existing inline badges from name area
+    const oldBadges = card.querySelectorAll('.linkedin-match-inline-score');
+    oldBadges.forEach(badge => {
+      if (badge.parentElement !== card) {
+        badge.remove();
+      }
+    });
+    
+    // Find or create badge container as a separate row at the bottom
     let badgeContainer = card.querySelector('.linkedin-match-badge-container');
     if (!badgeContainer) {
       badgeContainer = document.createElement('div');
       badgeContainer.className = 'linkedin-match-badge-container';
-      card.style.position = 'relative'; // Ensure card has positioning context
+      // Insert at the end of the card (not positioned absolute)
       card.appendChild(badgeContainer);
     }
     
