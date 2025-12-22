@@ -334,9 +334,18 @@ async function scanAndProcessCards() {
  */
 async function injectInlineScoreForCard(card, profileId, profileName, nameElement, headline = '') {
   try {
+    // Find or create badge container in bottom-right of card
+    let badgeContainer = card.querySelector('.linkedin-match-badge-container');
+    if (!badgeContainer) {
+      badgeContainer = document.createElement('div');
+      badgeContainer.className = 'linkedin-match-badge-container';
+      card.style.position = 'relative'; // Ensure card has positioning context
+      card.appendChild(badgeContainer);
+    }
+    
     // Show loading badge
     const loadingBadge = createInlineScoreBadge('...', 'loading');
-    nameElement.parentElement.appendChild(loadingBadge);
+    badgeContainer.appendChild(loadingBadge);
     
     // Generate features (simplified)
     const features = calculateFeatures({
@@ -367,9 +376,9 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
         fromCache: response.fromCache
       };
       
-      // Create clickable badge
+      // Create clickable badge in the container
       const badge = createClickableScoreBadge(matchData);
-      nameElement.parentElement.appendChild(badge);
+      badgeContainer.appendChild(badge);
     }
   } catch (error) {
     console.error('Error calculating score for card:', error);
@@ -509,7 +518,7 @@ async function analyzeProfileFallback(profileId) {
  * Create a clickable inline score badge that opens a modal
  */
 function createClickableScoreBadge(matchData) {
-  const badge = document.createElement('span');
+  const badge = document.createElement('div');
   const scoreClass = getScoreClass(matchData.score);
   badge.className = `linkedin-match-inline-score ${scoreClass} clickable`;
   badge.textContent = `${matchData.score.toFixed(0)} Match`;
@@ -519,12 +528,24 @@ function createClickableScoreBadge(matchData) {
   // Store match data
   badge.dataset.matchData = JSON.stringify(matchData);
   
-  // Add click handler to open modal
-  badge.addEventListener('click', (e) => {
+  // Add multiple event handlers to stop propagation
+  const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
     showMatchModal(matchData);
-  });
+    return false;
+  };
+  
+  badge.addEventListener('click', handleClick, true); // Capture phase
+  badge.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  }, true);
+  badge.addEventListener('mouseup', (e) => {
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  }, true);
   
   return badge;
 }
