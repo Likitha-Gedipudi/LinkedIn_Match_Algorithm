@@ -124,15 +124,16 @@ function waitForElement(selector, timeout = 5000) {
 function extractProfileData() {
   const data = {
     profileId: currentProfileId,
-    name: extractText('.pv-text-details__left-panel h1'),
-    headline: extractText('.pv-text-details__left-panel .text-body-medium'),
-    location: extractText('.pv-text-details__left-panel .text-body-small'),
+    name: extractText('.pv-text-details__left-panel h1, .text-heading-xlarge, h1'),
+    headline: extractText('.pv-text-details__left-panel .text-body-medium, .text-body-medium'),
+    location: extractText('.pv-text-details__left-panel .text-body-small, .text-body-small'),
     connections: extractConnectionCount(),
     experience: extractExperience(),
     skills: extractSkills(),
     education: extractEducation()
   };
   
+  console.log('Extracted profile data:', data);
   return data;
 }
 
@@ -322,10 +323,19 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
  */
 async function analyzeProfileInline(profileId) {
   try {
-    // Find the profile name element
-    const nameElement = document.querySelector('.pv-text-details__left-panel h1');
+    // Find the profile name element - try multiple selectors
+    const nameElement = document.querySelector(
+      '.pv-text-details__left-panel h1, ' +
+      '.text-heading-xlarge, ' +
+      'h1.inline, ' +
+      '[data-generated-suggestion-target] h1, ' +
+      '.artdeco-entity-lockup__title'
+    );
+    
     if (!nameElement) {
-      console.error('Could not find profile name element');
+      console.error('Could not find profile name element. Showing overlay card instead.');
+      // Fall back to showing the overlay card only
+      await analyzeProfileFallback(profileId);
       return;
     }
     
@@ -376,6 +386,35 @@ async function analyzeProfileInline(profileId) {
     
   } catch (error) {
     console.error('Profile analysis failed:', error);
+  }
+}
+
+/**
+ * Fallback: Show overlay card only (when inline badge can't be placed)
+ */
+async function analyzeProfileFallback(profileId) {
+  try {
+    showLoadingOverlay();
+    
+    const profileData = extractProfileData();
+    const features = calculateFeatures(profileData);
+    
+    const response = await chrome.runtime.sendMessage({
+      action: 'calculateCompatibility',
+      data: { profileId, ...features }
+    });
+    
+    if (response.error) {
+      showErrorOverlay(response.error);
+      return;
+    }
+    
+    if (response.success && response.data) {
+      showScoreOverlay(response.data, response.fromCache);
+    }
+  } catch (error) {
+    console.error('Profile analysis failed:', error);
+    showErrorOverlay(error.message);
   }
 }
 
