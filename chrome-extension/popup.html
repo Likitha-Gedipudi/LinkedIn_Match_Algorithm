@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Match AI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 360px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .header {
+      padding: 24px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header h1 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .status {
+      padding: 20px 24px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .status-item:last-child {
+      border-bottom: none;
+    }
+
+    .status-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .status-value {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+
+    .badge-error {
+      background: rgba(239, 68, 68, 0.3);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+
+    .stats {
+      padding: 20px 24px;
+    }
+
+    .stats h3 {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .actions {
+      padding: 20px 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: white;
+      color: #667eea;
+    }
+
+    .btn-primary:hover {
+      background: rgba(255, 255, 255, 0.9);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🤝 LinkedIn Match AI</h1>
+    <p>Professional Networking Compatibility</p>
+  </div>
+
+  <div class="status">
+    <div class="status-item">
+      <span class="status-label">API Status</span>
+      <span class="status-badge badge-success" id="api-status">Online</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Model Status</span>
+      <span class="status-badge badge-success" id="model-status">Loaded</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Cache</span>
+      <span class="status-value" id="cache-size">0 profiles</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <h3>Analytics</h3>
+    <div class="stat-card">
+      <span class="stat-value" id="total-scans">0</span>
+      <span class="stat-label">Total Scans</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value" id="high-matches">0</span>
+      <span class="stat-label">High Matches (60+)</span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="btn-settings">⚙️ Settings</button>
+    <button class="btn" id="btn-clear-cache">🗑️ Clear Cache</button>
+    <button class="btn" id="btn-docs">📚 Documentation</button>
+  </div>
+
+  <script src="scripts/popup.js"></script>
+</body>
+</html>

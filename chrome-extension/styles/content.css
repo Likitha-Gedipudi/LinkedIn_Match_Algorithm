@@ -1,0 +1,253 @@
+/**
+ * Styles for LinkedIn page overlay
+ */
+
+.linkedin-match-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 20px 0;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  animation: slideIn 0.3s ease-out;
+  position: relative;
+  z-index: 999;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.match-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.match-icon {
+  font-size: 32px;
+}
+
+.match-title {
+  font-size: 20px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.cache-badge {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.match-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin: 24px 0;
+}
+
+.score-value {
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-max {
+  font-size: 28px;
+  font-weight: 500;
+  opacity: 0.8;
+  margin-left: 4px;
+}
+
+.match-recommendation {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.score-excellent {
+  background: rgba(16, 185, 129, 0.2);
+  border: 2px solid rgba(16, 185, 129, 0.5);
+}
+
+.score-good {
+  background: rgba(59, 130, 246, 0.2);
+  border: 2px solid rgba(59, 130, 246, 0.5);
+}
+
+.score-moderate {
+  background: rgba(245, 158, 11, 0.2);
+  border: 2px solid rgba(245, 158, 11, 0.5);
+}
+
+.score-low {
+  background: rgba(239, 68, 68, 0.2);
+  border: 2px solid rgba(239, 68, 68, 0.5);
+}
+
+.match-explanation {
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0.9;
+  text-align: center;
+  margin: 16px 0;
+}
+
+.match-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.match-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 8px 16px;
+  transition: all 0.2s;
+}
+
+.match-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.match-btn:active {
+  transform: translateY(0);
+}
+
+/* Loading state */
+.linkedin-match-card.loading {
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  margin: 24px auto;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error state */
+.linkedin-match-card.error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.error-message {
+  text-align: center;
+  font-size: 16px;
+  margin: 20px 0;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+/* Inline Score Badges */
+.linkedin-match-inline-score {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  margin-left: 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: all 0.2s;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.linkedin-match-inline-score:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Score color classes for inline badges */
+.linkedin-match-inline-score.score-excellent {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: 2px solid #10b981;
+}
+
+.linkedin-match-inline-score.score-good {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: 2px solid #3b82f6;
+}
+
+.linkedin-match-inline-score.score-moderate {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: 2px solid #f59e0b;
+}
+
+.linkedin-match-inline-score.score-low {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: 2px solid #ef4444;
+}
+
+.linkedin-match-inline-score.loading {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: 2px solid #667eea;
+  animation: pulse 1.5s infinite;
+}
+
+.linkedin-match-inline-score.error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: 2px solid #ef4444;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Small badge for network page cards */
+.mn-connection-card .linkedin-match-inline-score,
+.discover-person-card .linkedin-match-inline-score {
+  font-size: 12px;
+  padding: 4px 10px;
+  margin-left: 8px;
+}
