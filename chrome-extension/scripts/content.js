@@ -270,51 +270,69 @@ async function processNetworkPage() {
  * Scan and process all visible profile cards
  */
 async function scanAndProcessCards() {
-  // Find all profile cards
+  // Find all profile cards - including invitation cards
   const cards = document.querySelectorAll(
     '[data-control-name="invite_card"], ' +
     '.mn-connection-card, ' +
     '.discover-person-card, ' +
-    '.reusable-search__result-container'
+    '.reusable-search__result-container, ' +
+    '.invitation-card, ' +
+    'li.mn-invitation-list__card'
   );
   
   console.log(`Found ${cards.length} profile cards`);
   
-  for (const card of cards) {
-    // Skip if already processed
-    if (card.querySelector('.linkedin-match-inline-score')) {
-      continue;
+  // Process in batches for better performance
+  const batchSize = 5;
+  for (let i = 0; i < cards.length; i += batchSize) {
+    const batch = Array.from(cards).slice(i, i + batchSize);
+    
+    await Promise.all(batch.map(async (card) => {
+      // Skip if already processed
+      if (card.querySelector('.linkedin-match-inline-score')) {
+        return;
+      }
+      
+      // Extract profile info - try multiple selectors for invitation cards
+      const nameElement = card.querySelector(
+        '.mn-connection-card__name, ' +
+        '.discover-person-card__name, ' +
+        '.entity-result__title-text a, ' +
+        'a.app-aware-link span[aria-hidden="true"], ' +
+        '[data-control-name="actor_container"] span[dir="ltr"] span[aria-hidden="true"], ' +
+        '.invitation-card__title'
+      );
+      
+      const linkElement = card.querySelector('a[href*="/in/"]');
+      
+      if (!nameElement || !linkElement) return;
+      
+      // Extract profile ID from link
+      const match = linkElement.href.match(/\/in\/([^/?]+)/);
+      if (!match) return;
+      
+      const profileId = match[1];
+      const profileName = nameElement.textContent.trim();
+      
+      // Extract additional info for better matching
+      const headlineElement = card.querySelector('.invitation-card__subtitle, [data-control-name="subtitle"]');
+      const headline = headlineElement ? headlineElement.textContent.trim() : '';
+      
+      // Calculate and inject score
+      await injectInlineScoreForCard(card, profileId, profileName, nameElement, headline);
+    }));
+    
+    // Small delay between batches
+    if (i + batchSize < cards.length) {
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
-    
-    // Extract profile info - try multiple selectors
-    const nameElement = card.querySelector(
-      '.mn-connection-card__name, ' +
-      '.discover-person-card__name, ' +
-      '.entity-result__title-text a, ' +
-      'a.app-aware-link span[aria-hidden="true"]'
-    );
-    const linkElement = card.querySelector('a[href*="/in/"]');
-    
-    if (!nameElement || !linkElement) continue;
-    
-    // Extract profile ID from link
-    const match = linkElement.href.match(/\/in\/([^/?]+)/);
-    if (!match) continue;
-    
-    const profileId = match[1];
-    const profileName = nameElement.textContent.trim();
-    
-    // Calculate and inject score (with small delay to avoid rate limiting)
-    setTimeout(() => {
-      injectInlineScoreForCard(card, profileId, profileName, nameElement);
-    }, Math.random() * 1000);
   }
 }
 
 /**
  * Inject inline score for a single card
  */
-async function injectInlineScoreForCard(card, profileId, profileName, nameElement) {
+async function injectInlineScoreForCard(card, profileId, profileName, nameElement, headline = '') {
   try {
     // Show loading badge
     const loadingBadge = createInlineScoreBadge('...', 'loading');
@@ -339,7 +357,18 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
     
     if (response.success && response.data) {
       const score = response.data.compatibility_score;
-      const badge = createInlineScoreBadge(score.toFixed(0), getScoreClass(score));
+      const matchData = {
+        profileId,
+        profileName,
+        headline,
+        score,
+        recommendation: response.data.recommendation,
+        explanation: response.data.explanation,
+        fromCache: response.fromCache
+      };
+      
+      // Create clickable badge
+      const badge = createClickableScoreBadge(matchData);
       nameElement.parentElement.appendChild(badge);
     }
   } catch (error) {
@@ -477,6 +506,30 @@ async function analyzeProfileFallback(profileId) {
 }
 
 /**
+ * Create a clickable inline score badge that opens a modal
+ */
+function createClickableScoreBadge(matchData) {
+  const badge = document.createElement('span');
+  const scoreClass = getScoreClass(matchData.score);
+  badge.className = `linkedin-match-inline-score ${scoreClass} clickable`;
+  badge.textContent = `${matchData.score.toFixed(0)} Match`;
+  badge.title = 'Click for details';
+  badge.style.cursor = 'pointer';
+  
+  // Store match data
+  badge.dataset.matchData = JSON.stringify(matchData);
+  
+  // Add click handler to open modal
+  badge.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showMatchModal(matchData);
+  });
+  
+  return badge;
+}
+
+/**
  * Create an inline score badge
  */
 function createInlineScoreBadge(text, scoreClass, tooltip = '') {
@@ -489,6 +542,107 @@ function createInlineScoreBadge(text, scoreClass, tooltip = '') {
   }
   
   return badge;
+}
+
+/**
+ * Show match details modal
+ */
+function showMatchModal(matchData) {
+  // Remove any existing modal
+  const existingModal = document.getElementById('linkedin-match-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  // Create modal overlay
+  const modal = document.createElement('div');
+  modal.id = 'linkedin-match-modal';
+  modal.className = 'linkedin-match-modal-overlay';
+  
+  const scoreClass = getScoreClass(matchData.score);
+  const scoreEmoji = matchData.score >= 80 ? '🎯' : matchData.score >= 60 ? '✅' : matchData.score >= 40 ? '⚠️' : '❌';
+  
+  modal.innerHTML = `
+    <div class="linkedin-match-modal-content">
+      <button class="linkedin-match-modal-close" aria-label="Close">✕</button>
+      
+      <div class="modal-header">
+        <h2>${scoreEmoji} Compatibility Analysis</h2>
+        <div class="modal-profile-info">
+          <div class="modal-profile-name">${matchData.profileName}</div>
+          ${matchData.headline ? `<div class="modal-profile-headline">${matchData.headline}</div>` : ''}
+        </div>
+      </div>
+      
+      <div class="modal-score-section">
+        <div class="modal-score-circle ${scoreClass}">
+          <div class="modal-score-value">${matchData.score.toFixed(1)}</div>
+          <div class="modal-score-label">/ 100</div>
+        </div>
+        <div class="modal-recommendation ${scoreClass}">
+          ${matchData.recommendation}
+        </div>
+      </div>
+      
+      <div class="modal-details-section">
+        <h3>Match Factors</h3>
+        <div class="modal-explanation">
+          ${matchData.explanation.split(' | ').map(factor => `
+            <div class="modal-factor">
+              <span class="factor-icon">•</span>
+              <span class="factor-text">${factor}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-secondary" id="modal-export">📊 Export Data</button>
+        <button class="modal-btn modal-btn-primary" id="modal-view-profile">👤 View Profile</button>
+      </div>
+      
+      ${matchData.fromCache ? '<div class="modal-cache-badge">📌 From cache</div>' : ''}
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Add event listeners
+  modal.querySelector('.linkedin-match-modal-close').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+  
+  modal.querySelector('#modal-export').addEventListener('click', () => {
+    exportMatchData(matchData);
+  });
+  
+  modal.querySelector('#modal-view-profile').addEventListener('click', () => {
+    window.open(`https://www.linkedin.com/in/${matchData.profileId}/`, '_blank');
+    modal.remove();
+  });
+  
+  // Animate in
+  setTimeout(() => modal.classList.add('show'), 10);
+}
+
+/**
+ * Export match data as JSON
+ */
+function exportMatchData(matchData) {
+  const exportData = {
+    ...matchData,
+    timestamp: new Date().toISOString(),
+    url: window.location.href
+  };
+  
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `linkedin-match-${matchData.profileId}-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 /**

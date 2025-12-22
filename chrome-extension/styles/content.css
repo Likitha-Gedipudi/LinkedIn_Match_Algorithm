@@ -251,3 +251,255 @@
   padding: 4px 10px;
   margin-left: 8px;
 }
+
+/* Clickable badge styling */
+.linkedin-match-inline-score.clickable:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Modal Overlay */
+.linkedin-match-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.linkedin-match-modal-overlay.show {
+  opacity: 1;
+}
+
+/* Modal Content */
+.linkedin-match-modal-content {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  transform: scale(0.9);
+  transition: transform 0.3s ease-out;
+}
+
+.linkedin-match-modal-overlay.show .linkedin-match-modal-content {
+  transform: scale(1);
+}
+
+/* Modal Close Button */
+.linkedin-match-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: #666;
+}
+
+.linkedin-match-modal-close:hover {
+  background: rgba(0, 0, 0, 0.2);
+  transform: rotate(90deg);
+}
+
+/* Modal Header */
+.modal-header {
+  padding: 32px 32px 24px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.modal-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 16px 0;
+}
+
+.modal-profile-info {
+  margin-top: 12px;
+}
+
+.modal-profile-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.modal-profile-headline {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Modal Score Section */
+.modal-score-section {
+  padding: 24px 32px;
+  text-align: center;
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+}
+
+.modal-score-circle {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+}
+
+.modal-score-circle.score-excellent {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+}
+
+.modal-score-circle.score-good {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+}
+
+.modal-score-circle.score-moderate {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+}
+
+.modal-score-circle.score-low {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+}
+
+.modal-score-value {
+  font-size: 48px;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+}
+
+.modal-score-label {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 4px;
+}
+
+.modal-recommendation {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 12px;
+  margin-top: 16px;
+  color: white;
+}
+
+/* Modal Details Section */
+.modal-details-section {
+  padding: 24px 32px;
+}
+
+.modal-details-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-explanation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-factor {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.factor-icon {
+  color: #667eea;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.factor-text {
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* Modal Actions */
+.modal-actions {
+  padding: 24px 32px;
+  border-top: 2px solid #f3f4f6;
+  display: flex;
+  gap: 12px;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.modal-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.modal-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modal-btn-secondary:hover {
+  background: #e5e7eb;
+  transform: translateY(-2px);
+}
+
+/* Modal Cache Badge */
+.modal-cache-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
