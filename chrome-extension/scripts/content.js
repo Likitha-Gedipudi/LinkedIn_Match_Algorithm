@@ -6,9 +6,38 @@
 let currentProfileId = null;
 let settings = {};
 
+// Console helper for debugging
+window.linkedInMatchDebug = function() {
+  console.log('🔍 LinkedIn Match AI Debug');
+  console.log('\n1️⃣ Looking for profile name elements...');
+  
+  const selectors = [
+    '.pv-text-details__left-panel h1',
+    '.text-heading-xlarge',
+    'h1.inline',
+    'main h1',
+    '.ph5 h1',
+    'h1'
+  ];
+  
+  selectors.forEach(sel => {
+    const el = document.querySelector(sel);
+    console.log(`${sel}:`, el ? `✅ "${el.textContent.trim().substring(0, 50)}"` : '❌');
+  });
+  
+  console.log('\n2️⃣ All h1 elements on page:');
+  document.querySelectorAll('h1').forEach((h1, i) => {
+    console.log(`  ${i + 1}. "${h1.textContent.trim().substring(0, 50)}"`);
+  });
+  
+  console.log('\n3️⃣ Current URL:', window.location.pathname);
+  console.log('\n💡 Run this anytime to debug selector issues!');
+};
+
 // Initialize
 (async function init() {
   console.log('LinkedIn Match AI: Content script loaded');
+  console.log('💡 Type linkedInMatchDebug() in console to debug selector issues');
   
   // Get settings
   settings = await getSettings();
@@ -323,17 +352,46 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
  */
 async function analyzeProfileInline(profileId) {
   try {
-    // Find the profile name element - try multiple selectors
-    const nameElement = document.querySelector(
-      '.pv-text-details__left-panel h1, ' +
-      '.text-heading-xlarge, ' +
-      'h1.inline, ' +
-      '[data-generated-suggestion-target] h1, ' +
-      '.artdeco-entity-lockup__title'
-    );
+    // Find the profile name element - try multiple strategies
+    let nameElement = null;
+    
+    // Strategy 1: Known selectors
+    const selectors = [
+      '.pv-text-details__left-panel h1',
+      '.text-heading-xlarge',
+      'h1.inline',
+      '[data-generated-suggestion-target] h1',
+      '.artdeco-entity-lockup__title',
+      'main h1',  // More generic
+      '.ph5 h1',   // Profile header area
+      'h1[class*="heading"]'  // Any h1 with "heading" in class
+    ];
+    
+    for (const selector of selectors) {
+      nameElement = document.querySelector(selector);
+      if (nameElement && nameElement.textContent.trim()) {
+        console.log(`✅ Found name element using: ${selector}`);
+        break;
+      }
+    }
+    
+    // Strategy 2: Find first h1 in profile area
+    if (!nameElement) {
+      const allH1s = document.querySelectorAll('h1');
+      for (const h1 of allH1s) {
+        const text = h1.textContent.trim();
+        // Profile names are usually 10-60 chars and don't contain numbers/special chars heavily
+        if (text.length >= 5 && text.length <= 100 && !text.includes('LinkedIn')) {
+          nameElement = h1;
+          console.log('✅ Found name element using heuristic:', text.substring(0, 30));
+          break;
+        }
+      }
+    }
     
     if (!nameElement) {
-      console.error('Could not find profile name element. Showing overlay card instead.');
+      console.error('❌ Could not find profile name element with any strategy.');
+      console.log('Available h1 elements:', Array.from(document.querySelectorAll('h1')).map(h => h.textContent.trim()));
       // Fall back to showing the overlay card only
       await analyzeProfileFallback(profileId);
       return;
