@@ -289,6 +289,28 @@ li.mn-invitation-list__card .linkedin-match-badge-container,
   transform: scale(0.98);
 }
 
+/* Profile page badge container - above Message button */
+.linkedin-match-profile-badge {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  padding: 12px 0 !important;
+  margin-bottom: 12px !important;
+  background: transparent !important;
+  border: none !important;
+  z-index: 10 !important;
+  pointer-events: auto !important;
+  clear: both !important;
+}
+
+/* Larger badge on profile pages */
+.linkedin-match-profile-badge .linkedin-match-inline-score {
+  font-size: 15px !important;
+  padding: 10px 20px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
 /* Modal Overlay */
 .linkedin-match-modal-overlay {
   position: fixed;

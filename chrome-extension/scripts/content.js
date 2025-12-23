@@ -401,102 +401,107 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
 }
 
 /**
- * Analyze profile and inject score inline (next to name)
+ * Analyze profile page - inject badge above Message button
  */
 async function analyzeProfileInline(profileId) {
   try {
-    // Find the profile name element - try multiple strategies
-    let nameElement = null;
+    // Find the action container (Message/More buttons area)
+    // Try multiple strategies to find the button container
+    let actionContainer = null;
     
-    // Strategy 1: Known selectors
-    const selectors = [
-      '.pv-text-details__left-panel h1',
-      '.text-heading-xlarge',
-      'h1.inline',
-      '[data-generated-suggestion-target] h1',
-      '.artdeco-entity-lockup__title',
-      'main h1',  // More generic
-      '.ph5 h1',   // Profile header area
-      'h1[class*="heading"]'  // Any h1 with "heading" in class
-    ];
+    // Strategy 1: Find parent of Message button
+    const messageButton = document.querySelector('button[aria-label*="Message"]');
+    if (messageButton) {
+      // Go up to find the container with all action buttons
+      actionContainer = messageButton.parentElement?.parentElement;
+    }
     
-    for (const selector of selectors) {
-      nameElement = document.querySelector(selector);
-      if (nameElement && nameElement.textContent.trim()) {
-        console.log(`✅ Found name element using: ${selector}`);
-        break;
+    // Strategy 2: Find parent of Follow/Connect button
+    if (!actionContainer) {
+      const followButton = document.querySelector('button[aria-label*="Follow"], button[aria-label*="Connect"]');
+      if (followButton) {
+        actionContainer = followButton.parentElement;
       }
     }
     
-    // Strategy 2: Find first h1 in profile area
-    if (!nameElement) {
-      const allH1s = document.querySelectorAll('h1');
-      for (const h1 of allH1s) {
-        const text = h1.textContent.trim();
-        // Profile names are usually 10-60 chars and don't contain numbers/special chars heavily
-        if (text.length >= 5 && text.length <= 100 && !text.includes('LinkedIn')) {
-          nameElement = h1;
-          console.log('✅ Found name element using heuristic:', text.substring(0, 30));
-          break;
-        }
-      }
-    }
-    
-    if (!nameElement) {
-      console.error('❌ Could not find profile name element with any strategy.');
-      console.log('Available h1 elements:', Array.from(document.querySelectorAll('h1')).map(h => h.textContent.trim()));
-      // Fall back to showing the overlay card only
-      await analyzeProfileFallback(profileId);
+    if (!actionContainer) {
+      console.log('⚠️ Could not find action container on profile page');
       return;
     }
     
+    console.log('✅ Found action container:', actionContainer);
+    
     // Remove any existing badge
-    const existingBadge = document.querySelector('.linkedin-match-inline-score');
-    if (existingBadge) {
-      existingBadge.remove();
-    }
+    const existingBadges = document.querySelectorAll('.linkedin-match-profile-badge');
+    existingBadges.forEach(badge => badge.remove());
+    
+    // Create dedicated badge container above action buttons
+    const badgeContainer = document.createElement('div');
+    badgeContainer.className = 'linkedin-match-profile-badge';
+    badgeContainer.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 0;
+      margin-bottom: 12px;
+      z-index: 10;
+    `;
+    
+    // Insert BEFORE action buttons
+    actionContainer.parentNode.insertBefore(badgeContainer, actionContainer);
     
     // Show loading badge
     const loadingBadge = createInlineScoreBadge('Analyzing...', 'loading');
-    nameElement.parentElement.appendChild(loadingBadge);
+    badgeContainer.appendChild(loadingBadge);
     
     // Extract profile data
     const profileData = extractProfileData();
     const features = calculateFeatures(profileData);
     
-    // Request compatibility calculation
-    const response = await chrome.runtime.sendMessage({
-      action: 'calculateCompatibility',
-      data: { profileId, ...features }
-    });
+    // Request compatibility calculation with error handling
+    let response;
+    try {
+      response = await chrome.runtime.sendMessage({
+        action: 'calculateCompatibility',
+        data: { profileId, ...features }
+      });
+    } catch (err) {
+      // Extension context invalidated - remove badge and stop
+      console.log('Extension context invalidated. Please reload the page.');
+      badgeContainer.remove();
+      return;
+    }
     
     // Remove loading badge
     loadingBadge.remove();
     
-    if (response.error) {
+    if (!response || response.error) {
       const errorBadge = createInlineScoreBadge('Error', 'error');
-      nameElement.parentElement.appendChild(errorBadge);
+      badgeContainer.appendChild(errorBadge);
       return;
     }
     
     if (response.success && response.data) {
       const score = response.data.compatibility_score;
-      const recommendation = response.data.recommendation;
+      const matchData = {
+        profileId,
+        profileName: document.querySelector('h1')?.textContent.trim() || 'Profile',
+        headline: document.querySelector('.text-body-medium')?.textContent.trim() || '',
+        score,
+        recommendation: response.data.recommendation,
+        explanation: response.data.explanation,
+        fromCache: response.fromCache
+      };
       
-      // Create inline score badge
-      const badge = createInlineScoreBadge(
-        `${score.toFixed(0)} Match`,
-        getScoreClass(score),
-        recommendation
-      );
-      nameElement.parentElement.appendChild(badge);
-      
-      // Also show the full overlay card below
-      showScoreOverlay(response.data, response.fromCache);
+      // Create clickable badge
+      const badge = createClickableScoreBadge(matchData);
+      badgeContainer.appendChild(badge);
     }
-    
   } catch (error) {
-    console.error('Profile analysis failed:', error);
+    // Silently handle errors - don't show to user
+    if (error.message && !error.message.includes('Extension context invalidated')) {
+      console.error('Profile analysis failed:', error);
+    }
   }
 }
 
