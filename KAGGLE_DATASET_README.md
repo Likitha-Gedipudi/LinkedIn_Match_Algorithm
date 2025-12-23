@@ -253,7 +253,7 @@ print(f"R² Score: {r2:.3f}")
 
 This dataset is part of an **open-source project**!
 
-**GitHub Repository:** [Add your GitHub URL]
+**GitHub Repository:** https://github.com/Likitha-Gedipudi/LinkedIn_Match_Algorithm
 
 **How to Contribute:**
 1. 🐛 Report bugs and issues
@@ -263,7 +263,7 @@ This dataset is part of an **open-source project**!
 5. 📝 Enhance documentation
 6. 🌐 Build applications using this data
 
-See [CONTRIBUTING.md](link) for detailed guidelines.
+See [CONTRIBUTING.md](https://github.com/Likitha-Gedipudi/LinkedIn_Match_Algorithm/blob/main/CONTRIBUTING.md) for detailed guidelines.
 
 ---
 
@@ -275,9 +275,9 @@ See [CONTRIBUTING.md](link) for detailed guidelines.
 - 🤖 **Model Training:** Train custom models
 
 ### Documentation
-- 📖 **Full Documentation:** [GitHub Wiki](link)
-- 🔧 **API Documentation:** [API Docs](link)
-- 🎓 **Tutorials:** [Medium Article](link)
+- 📖 **Full Documentation:** [GitHub Repository](https://github.com/Likitha-Gedipudi/LinkedIn_Match_Algorithm)
+- 🔧 **API Documentation:** [Live API](https://linkedin-match-algorithm-4ce8d98dc007.herokuapp.com/docs)
+- 🎓 **Chrome Extension:** [Extension Folder](https://github.com/Likitha-Gedipudi/LinkedIn_Match_Algorithm/tree/main/chrome-extension)
 
 ### Live Demo
 - 🌐 **API Endpoint:** https://linkedin-match-algorithm-4ce8d98dc007.herokuapp.com
@@ -298,7 +298,7 @@ This dataset is released under the **MIT License**.
 **You must:**
 - ⚠️ Include the license and copyright notice
 
-See [LICENSE](link) for full details.
+See [LICENSE](https://github.com/Likitha-Gedipudi/LinkedIn_Match_Algorithm/blob/main/LICENSE) for full details.
 
 ---
 
@@ -321,9 +321,8 @@ If you use this dataset in your research or project, please cite:
 ## 📧 Contact & Support
 
 - 💬 **Kaggle Comments:** Ask questions below
-- 🐛 **GitHub Issues:** [Report bugs](link)
-- 📧 **Email:** [Your email]
-- 🐦 **Twitter:** [Your handle]
+- 🐛 **GitHub Issues:** [Report bugs](https://github.com/Likitha-Gedipudi/LinkedIn_Match_Algorithm/issues)
+- 📧 **GitHub:** [@Likitha-Gedipudi](https://github.com/Likitha-Gedipudi)
 
 ---
 
