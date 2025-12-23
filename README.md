@@ -4,12 +4,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/Likitha-Gedipudi/LinkedIn_Match_Algorithm)
-[![Kaggle](https://img.shields.io/badge/Kaggle-Dataset-20BEFF)](https://www.kaggle.com/datasets/likithagadipudi/linkedin-professional-match)
+[![Kaggle](https://img.shields.io/badge/Kaggle-Dataset-20BEFF)](https://www.kaggle.com/datasets/likithagedipudi/linkedin-compatibility-dataset-50k-profiles)
 [![API](https://img.shields.io/badge/API-Live-green)](https://linkedin-match-algorithm-4ce8d98dc007.herokuapp.com)
 
 Enterprise-grade system for analyzing and predicting professional networking compatibility on LinkedIn. Uses ML models to score mutual benefit between professional profiles and generate a comprehensive compatibility dataset.
 
-🔗 **[GitHub Repository](https://github.com/Likitha-Gedipudi/LinkedIn_Match_Algorithm)** | 📊 **[Kaggle Dataset](https://www.kaggle.com/datasets/likithagadipudi/linkedin-professional-match)** | 🌐 **[Live API](https://linkedin-match-algorithm-4ce8d98dc007.herokuapp.com)** | 🎯 **[Chrome Extension](chrome-extension/)**
+🔗 **[GitHub Repository](https://github.com/Likitha-Gedipudi/LinkedIn_Match_Algorithm)** | 📊 **[Kaggle Dataset](https://www.kaggle.com/datasets/likithagedipudi/linkedin-compatibility-dataset-50k-profiles)** | 🌐 **[Live API](https://linkedin-match-algorithm-4ce8d98dc007.herokuapp.com)** | 🎯 **[Chrome Extension](chrome-extension/)**
 
 ## Project Overview
 
@@ -163,7 +163,7 @@ curl -X POST "http://localhost:8000/api/v1/batch-score" \
 
 ## Dataset
 
-> **📊 Download from Kaggle:** [LinkedIn Professional Match Dataset](https://www.kaggle.com/datasets/likithagadipudi/linkedin-professional-match)  
+> **📊 Download from Kaggle:** [LinkedIn Professional Match Dataset](https://www.kaggle.com/datasets/likithagedipudi/linkedin-compatibility-dataset-50k-profiles)  
 > **NOTE:** Large datasets not included in repo (181 MB exceeds GitHub limits)  
 > **Alternative:** Generate locally with `python scripts/regenerate_enhanced_data.py`
 
