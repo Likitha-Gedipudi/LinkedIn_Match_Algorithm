@@ -1,192 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LinkedIn Match AI</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      width: 360px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    .header {
-      padding: 24px;
-      text-align: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .header h1 {
-      font-size: 20px;
-      margin-bottom: 8px;
-    }
-
-    .header p {
-      font-size: 12px;
-      opacity: 0.9;
-    }
-
-    .status {
-      padding: 20px 24px;
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .status-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .status-item:last-child {
-      border-bottom: none;
-    }
-
-    .status-label {
-      font-size: 14px;
-      opacity: 0.9;
-    }
-
-    .status-value {
-      font-weight: 600;
-      font-size: 16px;
-    }
-
-    .status-badge {
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .badge-success {
-      background: rgba(16, 185, 129, 0.3);
-      border: 1px solid rgba(16, 185, 129, 0.5);
-    }
-
-    .badge-error {
-      background: rgba(239, 68, 68, 0.3);
-      border: 1px solid rgba(239, 68, 68, 0.5);
-    }
-
-    .stats {
-      padding: 20px 24px;
-    }
-
-    .stats h3 {
-      font-size: 14px;
-      opacity: 0.8;
-      margin-bottom: 16px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .stat-card {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-
-    .stat-value {
-      font-size: 32px;
-      font-weight: 700;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .stat-label {
-      font-size: 12px;
-      opacity: 0.8;
-    }
-
-    .actions {
-      padding: 20px 24px;
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .btn {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-bottom: 8px;
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-    }
-
-    .btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: translateY(-2px);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-    }
-
-    .btn-primary {
-      background: white;
-      color: #667eea;
-    }
-
-    .btn-primary:hover {
-      background: rgba(255, 255, 255, 0.9);
-    }
-  </style>
+  <link rel="stylesheet" href="styles/popup.css">
 </head>
+
 <body>
+  <!-- Header with LinkedIn branding -->
   <div class="header">
-    <h1>🤝 LinkedIn Match AI</h1>
-    <p>Professional Networking Compatibility</p>
+    <div class="logo">
+      <span class="logo-icon">🤝</span>
+      <h1>LinkedIn Match AI</h1>
+    </div>
+    <p class="subtitle">AI-Powered Professional Compatibility</p>
   </div>
 
-  <div class="status">
-    <div class="status-item">
-      <span class="status-label">API Status</span>
-      <span class="status-badge badge-success" id="api-status">Online</span>
+  <!-- Profile Setup Section -->
+  <div class="section">
+    <div class="section-header" id="profile-header">
+      <div class="section-title">
+        <span class="section-icon">👤</span>
+        <h2>Your Profile</h2>
+      </div>
+      <span class="status-indicator" id="profile-status">Not Set</span>
     </div>
-    <div class="status-item">
-      <span class="status-label">Model Status</span>
-      <span class="status-badge badge-success" id="model-status">Loaded</span>
-    </div>
-    <div class="status-item">
-      <span class="status-label">Cache</span>
-      <span class="status-value" id="cache-size">0 profiles</span>
+
+    <div class="section-content" id="profile-content">
+      <!-- URL Extraction -->
+      <div class="input-group">
+        <label for="linkedin-url">LinkedIn Profile URL</label>
+        <input type="text" id="linkedin-url" placeholder="https://www.linkedin.com/in/your-name/" class="input-field" />
+      </div>
+
+      <button class="btn btn-primary" id="btn-extract">
+        <span class="btn-icon">📥</span>
+        Extract Profile
+      </button>
+
+      <div class="divider">
+        <span>or</span>
+      </div>
+
+      <!-- Manual Entry Toggle -->
+      <button class="btn btn-secondary btn-small" id="btn-toggle-manual">
+        ✏️ Enter Manually
+      </button>
+
+      <!-- Manual Form (Hidden by default) -->
+      <div class="manual-form" id="manual-form" style="display: none;">
+        <div class="input-group">
+          <label>Name</label>
+          <input type="text" id="input-name" class="input-field" placeholder="Your Name" />
+        </div>
+        <div class="input-group">
+          <label>Skills (comma-separated)</label>
+          <input type="text" id="input-skills" class="input-field" placeholder="Python, Leadership, etc." />
+        </div>
+        <div class="input-row">
+          <div class="input-group">
+            <label>Experience (years)</label>
+            <input type="number" id="input-experience" class="input-field" placeholder="5" min="0" />
+          </div>
+          <div class="input-group">
+            <label>Connections</label>
+            <input type="number" id="input-connections" class="input-field" placeholder="500" min="0" />
+          </div>
+        </div>
+        <button class="btn btn-primary btn-small" id="btn-save-manual">
+          💾 Save Profile
+        </button>
+      </div>
+
+      <!-- Profile Preview (shown when profile is set) -->
+      <div class="profile-preview" id="profile-preview" style="display: none;">
+        <div class="preview-row">
+          <span class="preview-label">Name:</span>
+          <span class="preview-value" id="preview-name">-</span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-label">Skills:</span>
+          <span class="preview-value" id="preview-skills">-</span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-label">Experience:</span>
+          <span class="preview-value" id="preview-experience">-</span>
+        </div>
+        <button class="btn btn-secondary btn-small" id="btn-edit-profile">
+          ✏️ Edit
+        </button>
+      </div>
+
+      <!-- Status Messages -->
+      <div class="message" id="profile-message" style="display: none;"></div>
     </div>
   </div>
 
-  <div class="stats">
-    <h3>Analytics</h3>
-    <div class="stat-card">
-      <span class="stat-value" id="total-scans">0</span>
-      <span class="stat-label">Total Scans</span>
+  <!-- Quick Settings Section -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">⚙️</span>
+        <h2>Quick Settings</h2>
+      </div>
     </div>
-    <div class="stat-card">
-      <span class="stat-value" id="high-matches">0</span>
-      <span class="stat-label">High Matches (60+)</span>
+
+    <div class="section-content">
+      <!-- Enable/Disable Toggle -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Enable Scoring</span>
+          <span class="setting-desc">Show compatibility badges on LinkedIn</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-enabled" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <!-- Min Score Threshold -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Minimum Score</span>
+          <span class="setting-desc">Only show scores above <strong id="threshold-value">40</strong></span>
+        </div>
+      </div>
+      <input type="range" id="threshold-slider" class="slider" min="0" max="100" value="40" step="5">
     </div>
   </div>
 
-  <div class="actions">
-    <button class="btn btn-primary" id="btn-settings">⚙️ Settings</button>
-    <button class="btn" id="btn-clear-cache">🗑️ Clear Cache</button>
-    <button class="btn" id="btn-docs">📚 Documentation</button>
+  <!-- Stats Section -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">📊</span>
+        <h2>Statistics</h2>
+      </div>
+    </div>
+
+    <div class="section-content">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-scans">0</div>
+          <div class="stat-label">Profiles Analyzed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-avg">-</div>
+          <div class="stat-label">Avg Score</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-small" id="btn-clear-cache">
+        🗑️ Clear Cache
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span class="version">v1.1.0</span>
   </div>
 
   <script src="scripts/popup.js"></script>
 </body>
+
 </html>

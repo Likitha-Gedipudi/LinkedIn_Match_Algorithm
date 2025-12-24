@@ -2,9 +2,23 @@
 
 Enterprise-grade Chrome extension that provides real-time AI-powered compatibility scoring for LinkedIn profiles.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.2.0-blue)
 ![Manifest](https://img.shields.io/badge/manifest-v3-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
+
+## 🎉 NEW in v1.2: Real Feature Calculations!
+
+> **Major Update:** Extension now uses **100% real compatibility calculations** instead of random values!
+> 
+> - ✅ User profile configuration for personalized scoring
+> - ✅ Real skill matching algorithms (Jaccard similarity)
+> - ✅ Intelligent career alignment detection
+> - ✅ Industry relationship mapping
+> - ✅ Geographic compatibility scoring
+>
+> **📖 [Read Full Update Guide →](UPDATE_v1.2.md)** | **⚡ [Quick Start →](QUICKSTART_v1.2.md)** | **📋 [Technical Summary →](SOLUTION_SUMMARY.md)**
+>
+> **Action Required:** Set your profile in extension options for accurate scores!
 
 ## ✨ Features
 
@@ -264,6 +278,23 @@ convert logo.png -resize 128x128 icons/icon128.png
 ```
 
 ## 📝 Changelog
+
+### v1.2.0 (2025-12-23) - MAJOR UPDATE
+- 🎯 **Real Feature Calculations** - Replaced random values with intelligent algorithms
+- 👤 **User Profile System** - Store your LinkedIn profile for personalized scoring
+- 🧠 **Smart Skill Matching** - Jaccard similarity algorithm for skill overlap
+- 📈 **Career Alignment Detection** - Identifies mentorship potential (3-7 year gaps)
+- 🏢 **Industry Mapping** - Keyword extraction with related industry scoring
+- 🌍 **Geographic Intelligence** - Location parsing and proximity scoring
+- 📊 **Seniority Matching** - Level-based compatibility (entry/mid/senior/executive)
+- ⚙️ **Enhanced Options Page** - New "My Profile" configuration section
+- 📚 **Comprehensive Docs** - UPDATE_v1.2.md, QUICKSTART_v1.2.md, SOLUTION_SUMMARY.md
+- ✅ **18/18 Features** - All compatibility features now use real data
+
+### v1.1.0 (2025-12-22)
+- 🎨 Improved UI with inline badges
+- 📌 My Network page support
+- 🔄 Better caching
 
 ### v1.0.0 (2025-12-22)
 - ✨ Initial release

@@ -7,10 +7,10 @@ let currentProfileId = null;
 let settings = {};
 
 // Console helper for debugging
-window.linkedInMatchDebug = function() {
+window.linkedInMatchDebug = function () {
   console.log('🔍 LinkedIn Match AI Debug');
   console.log('\n1️⃣ Looking for profile name elements...');
-  
+
   const selectors = [
     '.pv-text-details__left-panel h1',
     '.text-heading-xlarge',
@@ -19,17 +19,17 @@ window.linkedInMatchDebug = function() {
     '.ph5 h1',
     'h1'
   ];
-  
+
   selectors.forEach(sel => {
     const el = document.querySelector(sel);
     console.log(`${sel}:`, el ? `✅ "${el.textContent.trim().substring(0, 50)}"` : '❌');
   });
-  
+
   console.log('\n2️⃣ All h1 elements on page:');
   document.querySelectorAll('h1').forEach((h1, i) => {
     console.log(`  ${i + 1}. "${h1.textContent.trim().substring(0, 50)}"`);
   });
-  
+
   console.log('\n3️⃣ Current URL:', window.location.pathname);
   console.log('\n💡 Run this anytime to debug selector issues!');
 };
@@ -38,14 +38,14 @@ window.linkedInMatchDebug = function() {
 (async function init() {
   console.log('LinkedIn Match AI: Content script loaded');
   console.log('💡 Type linkedInMatchDebug() in console to debug selector issues');
-  
+
   // Get settings
   settings = await getSettings();
-  
+
   if (!settings.apiEnabled || !settings.showScoreOverlay) {
     return;
   }
-  
+
   // Wait for page load
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', startObserving);
@@ -60,7 +60,7 @@ window.linkedInMatchDebug = function() {
 function startObserving() {
   // Check if we're on a profile page
   checkProfilePage();
-  
+
   // Observe URL changes (LinkedIn is SPA)
   let lastUrl = location.href;
   new MutationObserver(() => {
@@ -77,7 +77,7 @@ function startObserving() {
  */
 async function checkProfilePage() {
   const pathname = window.location.pathname;
-  
+
   // Check if we're on My Network page
   if (pathname.includes('/mynetwork/')) {
     // Disconnect profile observer if active
@@ -85,36 +85,36 @@ async function checkProfilePage() {
     await processNetworkPage();
     return;
   }
-  
+
   // Not on network page, disconnect network observer
   if (networkPageObserver) {
     networkPageObserver.disconnect();
     networkPageObserver = null;
   }
-  
+
   // Check if we're on a profile page
   const isProfilePage = pathname.includes('/in/');
-  
+
   if (!isProfilePage) {
     removeScoreOverlay();
     return;
   }
-  
+
   // Extract profile ID from URL
   const match = pathname.match(/\/in\/([^/]+)/);
   if (!match) return;
-  
+
   const profileId = match[1];
-  
+
   if (profileId === currentProfileId) {
     return; // Already processed
   }
-  
+
   currentProfileId = profileId;
-  
+
   // Wait for profile content to load
   await waitForElement('.pv-top-card');
-  
+
   // Extract and analyze profile - inject inline
   await analyzeProfileInline(profileId);
 }
@@ -127,19 +127,19 @@ function waitForElement(selector, timeout = 5000) {
     if (document.querySelector(selector)) {
       return resolve(document.querySelector(selector));
     }
-    
+
     const observer = new MutationObserver(() => {
       if (document.querySelector(selector)) {
         observer.disconnect();
         resolve(document.querySelector(selector));
       }
     });
-    
+
     observer.observe(document.body, {
       childList: true,
       subtree: true
     });
-    
+
     setTimeout(() => {
       observer.disconnect();
       resolve(null);
@@ -161,7 +161,7 @@ function extractProfileData() {
     skills: extractSkills(),
     education: extractEducation()
   };
-  
+
   console.log('Extracted profile data:', data);
   return data;
 }
@@ -183,7 +183,7 @@ function extractExperience() {
     const title = el.querySelector('.mr1.t-bold span')?.textContent.trim();
     const company = el.querySelector('.t-14.t-normal span')?.textContent.trim();
     const duration = el.querySelector('.t-14.t-normal.t-black--light span')?.textContent.trim();
-    
+
     if (title) {
       experiences.push({ title, company, duration });
     }
@@ -204,7 +204,7 @@ function extractEducation() {
   document.querySelectorAll('#education ~ div li.artdeco-list__item').forEach(el => {
     const school = el.querySelector('.mr1.t-bold span')?.textContent.trim();
     const degree = el.querySelector('.t-14.t-normal span')?.textContent.trim();
-    
+
     if (school) {
       education.push({ school, degree });
     }
@@ -214,25 +214,71 @@ function extractEducation() {
 
 /**
  * Calculate compatibility features from profile data
+ * Now uses stored user profile for accurate comparisons
  */
-function calculateFeatures(profileData) {
-  // This is a simplified feature extraction
-  // In production, you'd compare with the current user's profile
-  
-  const connectionCount = profileData.connections || 0;
-  const experienceYears = profileData.experience.length * 2; // Rough estimate
-  const skillCount = profileData.skills.length;
-  
+async function calculateFeatures(profileData) {
+  // Get stored user profile for comparison
+  const userProfile = await getUserProfile();
+
+  // Show notification if user profile not initialized
+  if (!userProfile.initialized) {
+    console.warn('⚠️ User profile not set. Using default values. Go to extension options to set your profile.');
+  }
+
+  const connectionCount = profileData.connections || 100;
+  const experienceYears = estimateExperienceYears(profileData.experience || []);
+
+  // Extract additional profile attributes
+  const industry = extractIndustry(profileData);
+  const location = extractLocation(profileData);
+  const seniority = estimateSeniority(experienceYears);
+
+  // Base features (9 features) - now using real calculations
+  const skill_match_score = calculateSkillMatch(profileData.skills || [], userProfile.skills || []);
+  const skill_complementarity_score = calculateSkillComplementarity(
+    profileData.skills || [],
+    userProfile.skills || [],
+    profileData.headline || '',  // Pass job title/headline for relevance matching
+    userProfile.headline || ''
+  );
+  const network_value_a_to_b = Math.min((connectionCount / 50) * 100, 100);
+  const network_value_b_to_a = Math.min((userProfile.connections / 50) * 100, 100);
+  const career_alignment_score = calculateCareerAlignment(experienceYears, userProfile.experienceYears || 5);
+  const experience_gap = Math.abs(experienceYears - (userProfile.experienceYears || 5));
+  const industry_match = calculateIndustryMatch(industry, userProfile.industry || 'Other');
+  const geographic_score = calculateGeographicScore(location, userProfile.location || 'Unknown');
+  const seniority_match = calculateSeniorityMatch(seniority, userProfile.seniority || 'mid');
+
+  // Derived features (9 features)
+  const network_value_avg = (network_value_a_to_b + network_value_b_to_a) / 2;
+  const network_value_diff = Math.abs(network_value_a_to_b - network_value_b_to_a);
+  const skill_total = skill_match_score + skill_complementarity_score;
+  const skill_balance = (skill_match_score * skill_complementarity_score) / 100;
+  const exp_gap_squared = experience_gap * experience_gap;
+  const is_mentorship_gap = (experience_gap >= 3 && experience_gap <= 7) ? 1 : 0;
+  const is_peer = (experience_gap <= 2) ? 1 : 0;
+  const skill_x_network = (skill_complementarity_score * network_value_avg) / 100;
+  const career_x_industry = (career_alignment_score * industry_match) / 100;
+
   return {
-    skill_match_score: Math.min(skillCount * 3, 100),
-    skill_complementarity_score: Math.min(skillCount * 2.5, 100),
-    network_value_a_to_b: Math.min((connectionCount / 10), 100),
-    network_value_b_to_a: Math.min((connectionCount / 10), 100),
-    career_alignment_score: Math.random() * 40 + 40, // 40-80
-    experience_gap: Math.floor(Math.random() * 10),
-    industry_match: Math.random() * 40 + 40,
-    geographic_score: Math.random() * 40 + 40,
-    seniority_match: Math.random() * 40 + 40
+    skill_match_score,
+    skill_complementarity_score,
+    network_value_a_to_b,
+    network_value_b_to_a,
+    career_alignment_score,
+    experience_gap,
+    industry_match,
+    geographic_score,
+    seniority_match,
+    network_value_avg,
+    network_value_diff,
+    skill_total,
+    skill_balance,
+    exp_gap_squared,
+    is_mentorship_gap,
+    is_peer,
+    skill_x_network,
+    career_x_industry
   };
 }
 
@@ -243,19 +289,19 @@ let networkPageObserver = null;
 
 async function processNetworkPage() {
   console.log('Processing My Network page...');
-  
+
   // Wait for invitation cards to load
   await waitForElement('[data-control-name="invite_card"], .mn-connection-card', 3000);
-  
+
   // Process initial cards
   await scanAndProcessCards();
-  
+
   // Set up observer for dynamically loaded cards
   if (!networkPageObserver) {
     networkPageObserver = new MutationObserver(() => {
       scanAndProcessCards();
     });
-    
+
     const targetNode = document.querySelector('.scaffold-finite-scroll__content, main');
     if (targetNode) {
       networkPageObserver.observe(targetNode, {
@@ -279,20 +325,20 @@ async function scanAndProcessCards() {
     '.invitation-card, ' +
     'li.mn-invitation-list__card'
   );
-  
+
   console.log(`Found ${cards.length} profile cards`);
-  
+
   // Process in batches for better performance
   const batchSize = 5;
   for (let i = 0; i < cards.length; i += batchSize) {
     const batch = Array.from(cards).slice(i, i + batchSize);
-    
+
     await Promise.all(batch.map(async (card) => {
       // Skip if already processed
       if (card.querySelector('.linkedin-match-inline-score')) {
         return;
       }
-      
+
       // Extract profile info - try multiple selectors for invitation cards
       const nameElement = card.querySelector(
         '.mn-connection-card__name, ' +
@@ -302,26 +348,26 @@ async function scanAndProcessCards() {
         '[data-control-name="actor_container"] span[dir="ltr"] span[aria-hidden="true"], ' +
         '.invitation-card__title'
       );
-      
+
       const linkElement = card.querySelector('a[href*="/in/"]');
-      
+
       if (!nameElement || !linkElement) return;
-      
+
       // Extract profile ID from link
       const match = linkElement.href.match(/\/in\/([^/?]+)/);
       if (!match) return;
-      
+
       const profileId = match[1];
       const profileName = nameElement.textContent.trim();
-      
+
       // Extract additional info for better matching
       const headlineElement = card.querySelector('.invitation-card__subtitle, [data-control-name="subtitle"]');
       const headline = headlineElement ? headlineElement.textContent.trim() : '';
-      
+
       // Calculate and inject score
       await injectInlineScoreForCard(card, profileId, profileName, nameElement, headline);
     }));
-    
+
     // Small delay between batches
     if (i + batchSize < cards.length) {
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -337,7 +383,7 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
     // Remove any existing badges
     const oldBadges = card.querySelectorAll('.linkedin-match-badge-container, .linkedin-match-inline-score');
     oldBadges.forEach(badge => badge.remove());
-    
+
     // Find the button container (Accept/Ignore buttons)
     const buttonContainer = card.querySelector(
       '.invitation-card__action-container, ' +
@@ -345,11 +391,11 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
       '.mn-connection-card__action-container, ' +
       'footer'
     );
-    
+
     // Create badge container
     const badgeContainer = document.createElement('div');
     badgeContainer.className = 'linkedin-match-badge-container';
-    
+
     // Insert BEFORE the button container
     if (buttonContainer) {
       buttonContainer.parentNode.insertBefore(badgeContainer, buttonContainer);
@@ -357,28 +403,28 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
       // Fallback: append to card
       card.appendChild(badgeContainer);
     }
-    
+
     // Show loading badge
     const loadingBadge = createInlineScoreBadge('...', 'loading');
     badgeContainer.appendChild(loadingBadge);
-    
+
     // Generate features (simplified)
-    const features = calculateFeatures({
+    const features = await calculateFeatures({
       profileId,
       connections: 100,
       skills: [],
       experience: []
     });
-    
+
     // Get compatibility score
     const response = await chrome.runtime.sendMessage({
       action: 'calculateCompatibility',
       data: { profileId, ...features }
     });
-    
+
     // Remove loading badge
     loadingBadge.remove();
-    
+
     if (response.success && response.data) {
       const score = response.data.compatibility_score;
       const matchData = {
@@ -388,9 +434,10 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
         score,
         recommendation: response.data.recommendation,
         explanation: response.data.explanation,
-        fromCache: response.fromCache
+        fromCache: response.fromCache,
+        features: features  // Include features for detailed breakdown
       };
-      
+
       // Create clickable badge in the container
       const badge = createClickableScoreBadge(matchData);
       badgeContainer.appendChild(badge);
@@ -405,84 +452,134 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
  */
 async function analyzeProfileInline(profileId) {
   try {
-    // Find the action container (Message/More buttons area)
-    // Try multiple strategies to find the button container
-    let actionContainer = null;
-    
-    // Strategy 1: Find parent of Message button
-    const messageButton = document.querySelector('button[aria-label*="Message"]');
-    if (messageButton) {
-      // Go up to find the container with all action buttons
-      actionContainer = messageButton.parentElement?.parentElement;
-    }
-    
-    // Strategy 2: Find parent of Follow/Connect button
-    if (!actionContainer) {
-      const followButton = document.querySelector('button[aria-label*="Follow"], button[aria-label*="Connect"]');
-      if (followButton) {
-        actionContainer = followButton.parentElement;
-      }
-    }
-    
-    if (!actionContainer) {
-      console.log('⚠️ Could not find action container on profile page');
+    console.log('🔍 ========== PROFILE ANALYSIS START ==========');
+    console.log('📍 Profile ID:', profileId);
+    console.log('🌐 URL:', window.location.href);
+
+    // Find the More button (3-dot menu)
+    const moreButton = document.querySelector(
+      'button[aria-label*="More actions"], ' +
+      'button[aria-label*="More"], ' +
+      '.artdeco-dropdown__trigger[aria-label*="More"]'
+    );
+
+    if (!moreButton) {
+      console.log('⚠️ Could not find More button on profile page');
       return;
     }
-    
-    console.log('✅ Found action container:', actionContainer);
-    
+
+    console.log('✅ Found More button:', moreButton);
+
     // Remove any existing badge
     const existingBadges = document.querySelectorAll('.linkedin-match-profile-badge');
     existingBadges.forEach(badge => badge.remove());
-    
-    // Create dedicated badge container above action buttons
+
+    // Create badge container to appear next to More button
     const badgeContainer = document.createElement('div');
     badgeContainer.className = 'linkedin-match-profile-badge';
     badgeContainer.style.cssText = `
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      padding: 12px 0;
-      margin-bottom: 12px;
-      z-index: 10;
+      margin-left: 8px;
+      vertical-align: middle;
     `;
-    
-    // Insert BEFORE action buttons
-    actionContainer.parentNode.insertBefore(badgeContainer, actionContainer);
-    
+
+    // Insert badge AFTER the More button
+    moreButton.parentNode.insertBefore(badgeContainer, moreButton.nextSibling);
+
     // Show loading badge
     const loadingBadge = createInlineScoreBadge('Analyzing...', 'loading');
     badgeContainer.appendChild(loadingBadge);
-    
+
+    console.log('⏳ Extracting profile data...');
+
     // Extract profile data
     const profileData = extractProfileData();
-    const features = calculateFeatures(profileData);
-    
+    console.log('📊 Extracted Target Profile Data:', {
+      profileId: profileData.profileId,
+      name: profileData.name,
+      headline: profileData.headline,
+      location: profileData.location,
+      connections: profileData.connections,
+      skillCount: profileData.skills?.length || 0,
+      skills: profileData.skills,
+      experienceCount: profileData.experience?.length || 0,
+      educationCount: profileData.education?.length || 0
+    });
+
+    console.log('⚙️ Calculating features...');
+    const features = await calculateFeatures(profileData);
+
+    console.log('📈 Calculated Features:', features);
+
+    // Get user profile for comparison logging
+    const userProfile = await getUserProfile();
+    console.log('👤 Your Profile Data:', {
+      name: userProfile.name,
+      headline: userProfile.headline,
+      skillCount: userProfile.skills?.length || 0,
+      skills: userProfile.skills,
+      experienceYears: userProfile.experienceYears,
+      connections: userProfile.connections,
+      industry: userProfile.industry,
+      seniority: userProfile.seniority,
+      location: userProfile.location,
+      initialized: userProfile.initialized
+    });
+
+    console.log('🔄 Sending API request to calculate compatibility...');
+    console.log('📤 API Request Data:', { profileId, features });
+
     // Request compatibility calculation with error handling
     let response;
+    const apiStartTime = Date.now();
+
     try {
       response = await chrome.runtime.sendMessage({
         action: 'calculateCompatibility',
-        data: { profileId, ...features }
+        data: {
+          profileId,
+          userProfile: userProfile,      // NEW: Full user profile for Groq
+          targetProfile: profileData,     // NEW: Full target profile for Groq
+          ...features                     // KEEP: Features for Model API fallback
+        }
       });
+
+      const apiDuration = Date.now() - apiStartTime;
+      console.log(`✅ API Response received (${apiDuration}ms):`, response);
+
+      if (response.fromCache) {
+        console.log('📌 Result from cache');
+      } else {
+        console.log('🌐 Fresh API call');
+      }
+
     } catch (err) {
+      console.error('❌ API call failed:', err);
       // Extension context invalidated - remove badge and stop
       console.log('Extension context invalidated. Please reload the page.');
       badgeContainer.remove();
       return;
     }
-    
+
     // Remove loading badge
     loadingBadge.remove();
-    
+
     if (!response || response.error) {
+      console.error('❌ API returned error:', response?.error);
       const errorBadge = createInlineScoreBadge('Error', 'error');
       badgeContainer.appendChild(errorBadge);
       return;
     }
-    
+
     if (response.success && response.data) {
       const score = response.data.compatibility_score;
+
+      console.log('🎯 COMPATIBILITY RESULT:');
+      console.log('  Score:', score);
+      console.log('  Recommendation:', response.data.recommendation);
+      console.log('  Explanation:', response.data.explanation);
+
       const matchData = {
         profileId,
         profileName: document.querySelector('h1')?.textContent.trim() || 'Profile',
@@ -490,9 +587,31 @@ async function analyzeProfileInline(profileId) {
         score,
         recommendation: response.data.recommendation,
         explanation: response.data.explanation,
-        fromCache: response.fromCache
+        fromCache: response.fromCache,
+        features: features,  // Include features for detailed breakdown
+        // Add comparison data for UI
+        targetProfile: {
+          name: profileData.name,
+          headline: profileData.headline,
+          skills: profileData.skills || [],
+          experience: profileData.experience || [],
+          connections: profileData.connections,
+          location: profileData.location
+        },
+        userProfile: {
+          name: userProfile.name,
+          headline: userProfile.headline,
+          skills: userProfile.skills || [],
+          experienceYears: userProfile.experienceYears,
+          connections: userProfile.connections,
+          location: userProfile.location,
+          industry: userProfile.industry,
+          seniority: userProfile.seniority
+        }
       };
-      
+
+      console.log('✅ ========== PROFILE ANALYSIS COMPLETE ==========\n');
+
       // Create clickable badge
       const badge = createClickableScoreBadge(matchData);
       badgeContainer.appendChild(badge);
@@ -500,7 +619,8 @@ async function analyzeProfileInline(profileId) {
   } catch (error) {
     // Silently handle errors - don't show to user
     if (error.message && !error.message.includes('Extension context invalidated')) {
-      console.error('Profile analysis failed:', error);
+      console.error('❌ Profile analysis failed:', error);
+      console.error('Stack trace:', error.stack);
     }
   }
 }
@@ -511,20 +631,20 @@ async function analyzeProfileInline(profileId) {
 async function analyzeProfileFallback(profileId) {
   try {
     showLoadingOverlay();
-    
+
     const profileData = extractProfileData();
     const features = calculateFeatures(profileData);
-    
+
     const response = await chrome.runtime.sendMessage({
       action: 'calculateCompatibility',
       data: { profileId, ...features }
     });
-    
+
     if (response.error) {
       showErrorOverlay(response.error);
       return;
     }
-    
+
     if (response.success && response.data) {
       showScoreOverlay(response.data, response.fromCache);
     }
@@ -544,10 +664,10 @@ function createClickableScoreBadge(matchData) {
   badge.textContent = `${matchData.score.toFixed(0)} Match`;
   badge.title = 'Click for details';
   badge.style.cursor = 'pointer';
-  
+
   // Store match data
   badge.dataset.matchData = JSON.stringify(matchData);
-  
+
   // Add multiple event handlers to stop propagation
   const handleClick = (e) => {
     e.preventDefault();
@@ -556,7 +676,7 @@ function createClickableScoreBadge(matchData) {
     showMatchModal(matchData);
     return false;
   };
-  
+
   badge.addEventListener('click', handleClick, true); // Capture phase
   badge.addEventListener('mousedown', (e) => {
     e.stopPropagation();
@@ -566,7 +686,7 @@ function createClickableScoreBadge(matchData) {
     e.stopPropagation();
     e.stopImmediatePropagation();
   }, true);
-  
+
   return badge;
 }
 
@@ -577,16 +697,16 @@ function createInlineScoreBadge(text, scoreClass, tooltip = '') {
   const badge = document.createElement('span');
   badge.className = `linkedin-match-inline-score ${scoreClass}`;
   badge.textContent = text;
-  
+
   if (tooltip) {
     badge.title = tooltip;
   }
-  
+
   return badge;
 }
 
 /**
- * Show match details modal
+ * Show match details modal with detailed reasoning
  */
 function showMatchModal(matchData) {
   // Remove any existing modal
@@ -594,15 +714,21 @@ function showMatchModal(matchData) {
   if (existingModal) {
     existingModal.remove();
   }
-  
+
   // Create modal overlay
   const modal = document.createElement('div');
   modal.id = 'linkedin-match-modal';
   modal.className = 'linkedin-match-modal-overlay';
-  
+
   const scoreClass = getScoreClass(matchData.score);
   const scoreEmoji = matchData.score >= 80 ? '🎯' : matchData.score >= 60 ? '✅' : matchData.score >= 40 ? '⚠️' : '❌';
-  
+
+  // Generate detailed factor breakdown HTML
+  const factorsHTML = generateFactorBreakdown(matchData);
+
+  // Generate profile comparison HTML
+  const comparisonHTML = generateProfileComparison(matchData);
+
   modal.innerHTML = `
     <div class="linkedin-match-modal-content">
       <button class="linkedin-match-modal-close" aria-label="Close">✕</button>
@@ -626,7 +752,21 @@ function showMatchModal(matchData) {
       </div>
       
       <div class="modal-details-section">
-        <h3>Match Factors</h3>
+        <h3>🔍 Profile Comparison</h3>
+        <div class="modal-comparison">
+          ${comparisonHTML}
+        </div>
+      </div>
+      
+      <div class="modal-details-section">
+        <h3>🎯 Score Breakdown & Reasoning</h3>
+        <div class="modal-reasoning">
+          ${factorsHTML}
+        </div>
+      </div>
+      
+      <div class="modal-details-section" style="margin-top: 16px;">
+        <h3>📋 Summary</h3>
         <div class="modal-explanation">
           ${matchData.explanation.split(' | ').map(factor => `
             <div class="modal-factor">
@@ -645,26 +785,193 @@ function showMatchModal(matchData) {
       ${matchData.fromCache ? '<div class="modal-cache-badge">📌 From cache</div>' : ''}
     </div>
   `;
-  
+
   document.body.appendChild(modal);
-  
+
   // Add event listeners
   modal.querySelector('.linkedin-match-modal-close').addEventListener('click', () => modal.remove());
   modal.addEventListener('click', (e) => {
     if (e.target === modal) modal.remove();
   });
-  
+
   modal.querySelector('#modal-export').addEventListener('click', () => {
     exportMatchData(matchData);
   });
-  
+
   modal.querySelector('#modal-view-profile').addEventListener('click', () => {
     window.open(`https://www.linkedin.com/in/${matchData.profileId}/`, '_blank');
     modal.remove();
   });
-  
+
   // Animate in
   setTimeout(() => modal.classList.add('show'), 10);
+}
+
+/**
+ * Generate profile comparison HTML
+ */
+function generateProfileComparison(matchData) {
+  const target = matchData.targetProfile || {};
+  const user = matchData.userProfile || {};
+
+  return `
+    <div class="comparison-table">
+      <div class="comparison-row comparison-header">
+        <div class="comparison-cell"></div>
+        <div class="comparison-cell">👤 You</div>
+        <div class="comparison-cell">🎯 ${matchData.profileName}</div>
+      </div>
+      
+      <div class="comparison-row">
+        <div class="comparison-cell comparison-label">Name</div>
+        <div class="comparison-cell">${user.name || '-'}</div>
+        <div class="comparison-cell">${target.name || '-'}</div>
+      </div>
+      
+      <div class="comparison-row">
+        <div class="comparison-cell comparison-label">Headline</div>
+        <div class="comparison-cell">${user.headline || '-'}</div>
+        <div class="comparison-cell">${target.headline || '-'}</div>
+      </div>
+      
+      <div class="comparison-row">
+        <div class="comparison-cell comparison-label">Skills</div>
+        <div class="comparison-cell">
+          <div class="skill-pills">
+            ${(user.skills || []).slice(0, 5).map(skill => `<span class="skill-pill">${skill}</span>`).join('')}
+            ${(user.skills?.length || 0) > 5 ? `<span class="skill-more">+${user.skills.length - 5} more</span>` : ''}
+          </div>
+        </div>
+        <div class="comparison-cell">
+          <div class="skill-pills">
+            ${(target.skills || []).slice(0, 5).map(skill => `<span class="skill-pill">${skill}</span>`).join('')}
+            ${(target.skills?.length || 0) > 5 ? `<span class="skill-more">+${target.skills.length - 5} more</span>` : ''}
+          </div>
+        </div>
+      </div>
+      
+      <div class="comparison-row">
+        <div class="comparison-cell comparison-label">Experience</div>
+        <div class="comparison-cell">${user.experienceYears || '-'} years</div>
+        <div class="comparison-cell">${target.experience?.length || '-'} positions</div>
+      </div>
+      
+      <div class="comparison-row">
+        <div class="comparison-cell comparison-label">Connections</div>
+        <div class="comparison-cell">${user.connections || '-'}</div>
+        <div class="comparison-cell">${target.connections || '-'}</div>
+      </div>
+      
+      <div class="comparison-row">
+        <div class="comparison-cell comparison-label">Location</div>
+        <div class="comparison-cell">${user.location || '-'}</div>
+        <div class="comparison-cell">${target.location || '-'}</div>
+      </div>
+      
+      <div class="comparison-row">
+        <div class="comparison-cell comparison-label">Industry</div>
+        <div class="comparison-cell">${user.industry || '-'}</div>
+        <div class="comparison-cell">-</div>
+      </div>
+      
+      <div class="comparison-row">
+        <div class="comparison-cell comparison-label">Seniority</div>
+        <div class="comparison-cell">${user.seniority || '-'}</div>
+        <div class="comparison-cell">-</div>
+      </div>
+    </div>
+    
+    <div class="comparison-note">
+      💡 This data was extracted from both profiles and used to calculate the compatibility score above.
+    </div>
+  `;
+}
+
+/**
+ * Generate detailed factor breakdown HTML
+ */
+function generateFactorBreakdown(matchData) {
+  // Extract features if available
+  const features = matchData.features || {};
+
+  // Define factor categories with their components
+  const factorCategories = [
+    {
+      icon: '🤝',
+      name: 'Skills Compatibility',
+      factors: [
+        {
+          label: 'Skill Overlap',
+          value: features.skill_match_score || 50,
+          description: 'How many skills you have in common'
+        },
+        {
+          label: 'Complementary Skills',
+          value: features.skill_complementarity_score || 40,
+          description: 'Unique skills that complement each other'
+        }
+      ]
+    },
+    {
+      icon: '💼',
+      name: 'Professional Alignment',
+      factors: [
+        {
+          label: 'Career Stage Match',
+          value: features.career_alignment_score || 60,
+          description: 'Alignment in career trajectory and goals'
+        },
+        {
+          label: 'Industry Match',
+          value: features.industry_match || 50,
+          description: 'Work in same or related industries'
+        },
+        {
+          label: 'Seniority Alignment',
+          value: features.seniority_match || 70,
+          description: 'Similar or complementary experience levels'
+        }
+      ]
+    },
+    {
+      icon: '🌐',
+      name: 'Network Value',
+      factors: [
+        {
+          label: 'Network Strength',
+          value: features.network_value_avg || 60,
+          description: 'Combined networking potential'
+        },
+        {
+          label: 'Geographic Proximity',
+          value: features.geographic_score || 50,
+          description: 'Location-based networking opportunities'
+        }
+      ]
+    }
+  ];
+
+  // Generate HTML for each category
+  return factorCategories.map(category => `
+    <div class="factor-category">
+      <div class="factor-category-header">
+        <span class="factor-category-icon">${category.icon}</span>
+        <span class="factor-category-name">${category.name}</span>
+      </div>
+      ${category.factors.map(factor => `
+        <div class="factor-item">
+          <div class="factor-item-header">
+            <span class="factor-label">${factor.label}</span>
+            <span class="factor-score ${getScoreClass(factor.value)}">${Math.round(factor.value)}%</span>
+          </div>
+          <div class="factor-progress-bar">
+            <div class="factor-progress-fill ${getScoreClass(factor.value)}" style="width: ${factor.value}%"></div>
+          </div>
+          <div class="factor-description">${factor.description}</div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
 }
 
 /**
@@ -676,7 +983,7 @@ function exportMatchData(matchData) {
     timestamp: new Date().toISOString(),
     url: window.location.href
   };
-  
+
   const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -691,17 +998,17 @@ function exportMatchData(matchData) {
  */
 function showScoreOverlay(compatibilityData, fromCache = false) {
   removeScoreOverlay();
-  
+
   const score = compatibilityData.compatibility_score;
   const recommendation = compatibilityData.recommendation;
   const explanation = compatibilityData.explanation;
-  
+
   const overlay = document.createElement('div');
   overlay.id = 'linkedin-match-overlay';
   overlay.className = 'linkedin-match-card';
-  
+
   const scoreClass = getScoreClass(score);
-  
+
   overlay.innerHTML = `
     <div class="match-header">
       <div class="match-icon">🤝</div>
@@ -728,21 +1035,21 @@ function showScoreOverlay(compatibilityData, fromCache = false) {
       <button class="match-btn" id="close-overlay" title="Close">✕</button>
     </div>
   `;
-  
+
   // Insert after profile card
   const profileCard = document.querySelector('.pv-top-card');
   if (profileCard) {
     profileCard.parentNode.insertBefore(overlay, profileCard.nextSibling);
-    
+
     // Add event listeners
     document.getElementById('refresh-score')?.addEventListener('click', () => {
       analyzeProfile(currentProfileId);
     });
-    
+
     document.getElementById('export-score')?.addEventListener('click', () => {
       exportScore(compatibilityData);
     });
-    
+
     document.getElementById('close-overlay')?.addEventListener('click', () => {
       removeScoreOverlay();
     });
@@ -751,7 +1058,7 @@ function showScoreOverlay(compatibilityData, fromCache = false) {
 
 function showLoadingOverlay() {
   removeScoreOverlay();
-  
+
   const overlay = document.createElement('div');
   overlay.id = 'linkedin-match-overlay';
   overlay.className = 'linkedin-match-card loading';
@@ -762,7 +1069,7 @@ function showLoadingOverlay() {
     </div>
     <div class="loading-spinner"></div>
   `;
-  
+
   const profileCard = document.querySelector('.pv-top-card');
   if (profileCard) {
     profileCard.parentNode.insertBefore(overlay, profileCard.nextSibling);
@@ -771,7 +1078,7 @@ function showLoadingOverlay() {
 
 function showErrorOverlay(message) {
   removeScoreOverlay();
-  
+
   const overlay = document.createElement('div');
   overlay.id = 'linkedin-match-overlay';
   overlay.className = 'linkedin-match-card error';
@@ -783,7 +1090,7 @@ function showErrorOverlay(message) {
     <div class="error-message">${message}</div>
     <button class="match-btn" id="close-overlay">Close</button>
   `;
-  
+
   const profileCard = document.querySelector('.pv-top-card');
   if (profileCard) {
     profileCard.parentNode.insertBefore(overlay, profileCard.nextSibling);
@@ -812,7 +1119,7 @@ function exportScore(data) {
     timestamp: new Date().toISOString(),
     ...data
   };
-  
+
   const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -828,4 +1135,78 @@ async function getSettings() {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage({ action: 'getSettings' }, resolve);
   });
+}
+
+/**
+ * Message listener for profile extraction requests from options page
+ */
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'extractMyProfile') {
+    handleProfileExtraction(sendResponse);
+    return true; // Keep channel open for async response
+  }
+});
+
+/**
+ * Extract current profile and send back to options page
+ */
+async function handleProfileExtraction(sendResponse) {
+  try {
+    // Check if we're on a LinkedIn profile page
+    const pathname = window.location.pathname;
+    const isProfilePage = pathname.includes('/in/');
+
+    if (!isProfilePage) {
+      sendResponse({
+        success: false,
+        error: 'Please navigate to your LinkedIn profile page first. (URL should contain /in/your-name)'
+      });
+      return;
+    }
+
+    // Wait for profile content to load
+    await waitForElement('.pv-top-card', 3000);
+
+    // Extract profile data using existing functions
+    const profileData = extractProfileData();
+
+    // Validate extracted data
+    if (!profileData.name) {
+      sendResponse({
+        success: false,
+        error: 'Could not extract profile name. Please make sure you are on a LinkedIn profile page.'
+      });
+      return;
+    }
+
+    // Extract additional metadata
+    const experienceYears = estimateExperienceYears(profileData.experience || []);
+    const industry = extractIndustry(profileData);
+    const location = extractLocation(profileData);
+    const seniority = estimateSeniority(experienceYears);
+
+    // Build complete profile
+    const completeProfile = {
+      name: profileData.name,
+      skills: profileData.skills || [],
+      experienceYears: experienceYears,
+      connections: profileData.connections || 0,
+      industry: industry,
+      seniority: seniority,
+      location: location,
+      headline: profileData.headline || ''
+    };
+
+    sendResponse({
+      success: true,
+      profile: completeProfile
+    });
+
+  } catch (error) {
+    console.error('Profile extraction error:', error);
+    sendResponse({
+      success: false,
+      error: 'Failed to extract profile data: ' + error.message
+    });
+  }
 }

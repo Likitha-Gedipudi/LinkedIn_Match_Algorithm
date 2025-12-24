@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -153,48 +152,6 @@
       cursor: pointer;
     }
 
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-group label {
-      display: block;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-
-    .form-group input[type="text"],
-    .form-group input[type="number"],
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border: 2px solid #e5e7eb;
-      border-radius: 6px;
-      font-size: 14px;
-      font-family: inherit;
-      transition: border-color 0.2s;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-
-    .form-group textarea {
-      resize: vertical;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
     .actions {
       padding: 24px 32px;
       background: #f9fafb;
@@ -251,21 +208,8 @@
       opacity: 1;
       transform: translateY(0);
     }
-
-    .profile-status.success {
-      background: #d1fae5;
-      color: #065f46;
-      border-left: 4px solid #10b981;
-    }
-
-    .profile-status.error {
-      background: #fee2e2;
-      color: #991b1b;
-      border-left: 4px solid #ef4444;
-    }
   </style>
 </head>
-
 <body>
   <div class="container">
     <div class="header">
@@ -275,128 +219,8 @@
 
     <div class="content">
       <div class="section">
-        <h2>📝 My Profile (For Accurate Matching)</h2>
-        <div class="setting-description"
-          style="margin-bottom: 16px; padding: 12px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
-          <strong>⚠️ Important:</strong> Set your profile information below for accurate compatibility scores. Without
-          this, the extension uses default values and scores won't be meaningful.
-        </div>
-
-        <!-- Auto-Extract Section -->
-        <div
-          style="background: #e0f2fe; border: 2px solid #0ea5e9; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-          <div style="display: flex; align-items: center; margin-bottom: 12px;">
-            <span style="font-size: 24px; margin-right: 8px;">✨</span>
-            <div>
-              <div style="font-weight: 600; color: #0c4a6e; font-size: 15px;">Quick Setup</div>
-              <div style="font-size: 13px; color: #075985; margin-top: 2px;">Extract your profile automatically from
-                LinkedIn</div>
-            </div>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label style="color: #0c4a6e; font-size: 14px; font-weight: 600;">Your LinkedIn Profile URL</label>
-            <input type="text" id="input-linkedin-url" placeholder="https://www.linkedin.com/in/your-name/"
-              style="border-color: #0ea5e9;" />
-          </div>
-
-          <button class="btn btn-primary" id="btn-extract-profile"
-            style="width: 100%; background: #0ea5e9; margin-bottom: 8px;">
-            📥 Extract from LinkedIn URL
-          </button>
-
-          <div style="font-size: 12px; color: #075985; line-height: 1.4;">
-            <strong>How it works:</strong><br>
-            1. Copy your LinkedIn profile URL (e.g., linkedin.com/in/your-name)<br>
-            2. Paste it in the field above<br>
-            3. Click "Extract" and your profile will be auto-filled below
-          </div>
-        </div>
-
-        <!-- Separator -->
-        <div
-          style="text-align: center; margin: 20px 0; color: #9ca3af; font-size: 13px; display: flex; align-items: center;">
-          <div style="flex: 1; height: 1px; background: #e5e7eb;"></div>
-          <span style="padding: 0 12px;">OR ENTER MANUALLY</span>
-          <div style="flex: 1; height: 1px; background: #e5e7eb;"></div>
-        </div>
-
-        <div class="form-group">
-          <label>Your Name</label>
-          <input type="text" id="input-name" placeholder="e.g., John Doe" />
-        </div>
-
-        <div class="form-group">
-          <label>Skills <span style="font-size: 12px; color: #6b7280;">(comma-separated)</span></label>
-          <textarea id="input-skills" rows="3"
-            placeholder="e.g., Python, Machine Learning, Data Analysis, Leadership"></textarea>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Years of Experience</label>
-            <input type="number" id="input-experience" min="0" max="50" placeholder="e.g., 5" />
-          </div>
-
-          <div class="form-group">
-            <label>Connections</label>
-            <input type="number" id="input-connections" min="0" placeholder="e.g., 500" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Industry</label>
-            <select id="input-industry">
-              <option value="">Select industry...</option>
-              <option value="Technology">Technology</option>
-              <option value="Finance">Finance</option>
-              <option value="Healthcare">Healthcare</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Sales">Sales</option>
-              <option value="Design">Design</option>
-              <option value="Education">Education</option>
-              <option value="Consulting">Consulting</option>
-              <option value="Legal">Legal</option>
-              <option value="HR">Human Resources</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Seniority Level</label>
-            <select id="input-seniority">
-              <option value="">Select level...</option>
-              <option value="entry">Entry Level</option>
-              <option value="mid">Mid Level</option>
-              <option value="senior">Senior Level</option>
-              <option value="executive">Executive</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Location</label>
-          <input type="text" id="input-location" placeholder="e.g., San Francisco, United States" />
-        </div>
-
-        <div class="form-group">
-          <label>Headline <span style="font-size: 12px; color: #6b7280;">(optional)</span></label>
-          <input type="text" id="input-headline" placeholder="e.g., Software Engineer at XYZ Corp" />
-        </div>
-
-        <button class="btn btn-primary" id="btn-save-profile" style="width: 100%; margin-top: 12px;">
-          💾 Save My Profile
-        </button>
-
-        <div class="profile-status" id="profile-status"
-          style="margin-top: 12px; padding: 12px; border-radius: 6px; display: none;">
-        </div>
-      </div>
-
-      <div class="section">
         <h2>General Settings</h2>
-
+        
         <div class="setting-item">
           <div class="setting-info">
             <div class="setting-label">Enable API</div>
@@ -432,7 +256,7 @@
 
       <div class="section">
         <h2>Scoring Preferences</h2>
-
+        
         <div class="slider-group">
           <div class="slider-label">
             <span>Minimum Score Threshold</span>
@@ -450,7 +274,7 @@
         <div class="setting-item">
           <div class="setting-info">
             <div class="setting-label">Version</div>
-            <div class="setting-description">1.1.0</div>
+            <div class="setting-description">1.0.0</div>
           </div>
         </div>
         <div class="setting-item">
@@ -472,5 +296,4 @@
 
   <script src="scripts/options.js"></script>
 </body>
-
 </html>
