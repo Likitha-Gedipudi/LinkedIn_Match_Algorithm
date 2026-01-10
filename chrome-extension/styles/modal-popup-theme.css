@@ -1,0 +1,395 @@
+/**
+ * MODAL - MATCHING POPUP THEME EXACTLY
+ * Using same LinkedIn blue theme and white card style as popup
+ */
+
+/* LinkedIn Theme Variables - same as popup */
+:root {
+    --linkedin-blue: #0A66C2;
+    --linkedin-blue-light: #378FE9;
+    --linkedin-blue-dark: #004182;
+    --linkedin-green: #057642;
+    --linkedin-gray: #F3F2EF;
+    --linkedin-gray-dark: #4d4d4d;
+    --linkedin-black: #000000;
+    --linkedin-white: #FFFFFF;
+    --text-secondary: #5e5e5e;
+}
+
+/* Modal Overlay */
+.linkedin-match-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+    opacity: 0;
+    transition: opacity 0.25s ease-out;
+}
+
+.linkedin-match-modal-overlay.show {
+    opacity: 1;
+}
+
+/* Modal Content - White card style like popup */
+.linkedin-match-modal-content {
+    background: var(--linkedin-white);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    transform: scale(0.95);
+    transition: transform 0.25s ease-out;
+}
+
+.linkedin-match-modal-overlay.show .linkedin-match-modal-content {
+    transform: scale(1);
+}
+
+/* Close Button */
+.linkedin-match-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    cursor: pointer;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 1;
+}
+
+.linkedin-match-modal-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    transform: rotate(90deg);
+}
+
+/* Modal Header - LinkedIn Blue like popup */
+.linkedin-match-modal-header {
+    background: var(--linkedin-blue);
+    color: white;
+    padding: 24px 24px 20px;
+    text-align: center;
+    border-radius: 8px 8px 0 0;
+}
+
+.linkedin-match-modal-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: white;
+}
+
+.linkedin-match-modal-subtitle {
+    font-size: 14px;
+    opacity: 0.95;
+    margin: 4px 0 0 0;
+    color: white;
+}
+
+.linkedin-match-modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+}
+
+/* Modal Body - White background like popup cards */
+.linkedin-match-modal-body {
+    padding: 20px 24px;
+    background: white;
+}
+
+/* Score Circle - LinkedIn Blue */
+.linkedin-match-score-circle {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: var(--linkedin-blue);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 4px 12px rgba(10, 102, 194, 0.25);
+}
+
+.linkedin-match-score-value {
+    font-size: 48px;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.linkedin-match-score-max {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+/* Recommendation Badge - Clean style like popup status indicators */
+.linkedin-match-recommendation {
+    background: var(--linkedin-gray);
+    border-left: 4px solid var(--linkedin-blue);
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin: 16px 0;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--linkedin-black);
+}
+
+/* Explanation Section - White card sections like popup */
+.linkedin-match-explanation {
+    background: white;
+    margin: 16px 0;
+}
+
+.linkedin-match-explanation h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--linkedin-black);
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.linkedin-match-explanation-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--linkedin-gray);
+}
+
+.linkedin-match-explanation-item:last-child {
+    border-bottom: none;
+}
+
+.linkedin-match-explanation-icon {
+    color: var(--linkedin-blue);
+    font-size: 14px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.linkedin-match-explanation-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--linkedin-black);
+    margin: 0;
+}
+
+/* Profile Comparison - Table style like popup preview */
+.linkedin-match-comparison {
+    margin-top: 16px;
+}
+
+.linkedin-match-comparison h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--linkedin-black);
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.linkedin-match-comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.linkedin-match-comparison-row {
+    border-bottom: 1px solid var(--linkedin-gray);
+}
+
+.linkedin-match-comparison-row:last-child {
+    border-bottom: none;
+}
+
+.linkedin-match-comparison-cell {
+    padding: 12px 8px;
+    font-size: 13px;
+    color: var(--linkedin-black);
+    vertical-align: top;
+}
+
+.linkedin-match-comparison-header .linkedin-match-comparison-cell {
+    font-weight: 700;
+    color: var(--linkedin-black);
+    background: var(--linkedin-gray);
+    padding: 10px 8px;
+}
+
+.linkedin-match-comparison-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+/* Skill Pills - Like popup style */
+.skill-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 4px 0;
+}
+
+.skill-pill {
+    background: #e5f4ff;
+    color: var(--linkedin-blue);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.skill-more {
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+}
+
+/* Footer Actions - Button style from popup */
+.linkedin-match-modal-footer {
+    padding: 16px 24px;
+    background: var(--linkedin-gray);
+    border-radius: 0 0 8px 8px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.linkedin-match-btn {
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.linkedin-match-btn-primary {
+    background: var(--linkedin-blue);
+    color: white;
+}
+
+.linkedin-match-btn-primary:hover {
+    background: var(--linkedin-blue-dark);
+    transform: translateY(-1px);
+}
+
+.linkedin-match-btn-secondary {
+    background: white;
+    color: var(--linkedin-black);
+    border: 1px solid #ccc;
+}
+
+.linkedin-match-btn-secondary:hover {
+    background: var(--linkedin-gray);
+    transform: translateY(-1px);
+}
+
+/* Cache Badge */
+.linkedin-match-cache-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #d1fae5;
+    color: #047857;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+/* Loading State */
+.linkedin-match-modal-loading {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.linkedin-match-loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--linkedin-gray);
+    border-top-color: var(--linkedin-blue);
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.linkedin-match-loading-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Section dividers */
+.linkedin-match-modal-body+.linkedin-match-modal-body {
+    border-top: 1px solid var(--linkedin-gray);
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .linkedin-match-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .linkedin-match-score-circle {
+        width: 140px;
+        height: 140px;
+    }
+
+    .linkedin-match-score-value {
+        font-size: 42px;
+    }
+
+    .linkedin-match-modal-body {
+        padding: 16px;
+    }
+}
+
+/* Ensure proper text contrast */
+.linkedin-match-modal-content {
+    color: var(--linkedin-black);
+}
+
+.linkedin-match-modal-content * {
+    color: inherit;
+}

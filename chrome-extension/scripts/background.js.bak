@@ -535,53 +535,83 @@ function validateGroqResponse(response) {
 /**
  * Calculate compatibility using Groq API
  */
-/**
- * Calculate compatibility using Groq API via Proxy Server
- */
 async function calculateWithGroq(userProfile, targetProfile) {
-  console.log('🤖 ========== GROQ PROXY CALL START ==========');
+  console.log('🤖 ========== GROQ API CALL START ==========');
   console.log('👤 User Profile:', userProfile);
   console.log('🎯 Target Profile:', targetProfile);
-  
+
+  const prompt = generateGroqPrompt(userProfile, targetProfile);
+  console.log('📝 Groq Prompt Length:', prompt.length, 'characters');
+
   try {
+    // Get API key from storage
+    const settings = await chrome.storage.sync.get('groqApiKey');
+    const apiKey = settings.groqApiKey;
+
+    if (!apiKey) {
+      throw new Error('Groq API key not configured');
+    }
+
     const requestStartTime = Date.now();
-    
-    // Call our secure proxy server (API key is on server)
-    const response = await fetch(`${GROQ_PROXY_URL}/api/compatibility`, {
+
+    const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        userProfile: userProfile,
-        targetProfile: targetProfile
+        model: GROQ_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: GROQ_SYSTEM_PROMPT
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 500,
+        top_p: 1,
+        response_format: { type: 'json_object' }
       })
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Proxy server error ${response.status}: ${errorText}`);
+      throw new Error(`Groq API error ${response.status}: ${errorText}`);
     }
-    
-    const result = await response.json();
+
+    const data = await response.json();
     const requestDuration = Date.now() - requestStartTime;
-    
-    console.log(`⏱️ Proxy Response Time: ${requestDuration}ms`);
-    console.log('📥 Proxy Response:', result);
-    console.log('🎯 Score:', result.data.compatibility_score);
-    console.log('💡 Recommendation:', result.data.recommendation);
-    console.log('📋 Explanation:', result.data.explanation);
-    console.log('✅ ========== GROQ PROXY CALL SUCCESS ==========\n');
-    
-    return result;
-    
+
+    console.log(`⏱️ Groq Response Time: ${requestDuration}ms`);
+    console.log('📥 Raw Groq Response:', data);
+
+    let result = JSON.parse(data.choices[0].message.content);
+    result = validateGroqResponse(result);
+
+    console.log('✅ Validated Groq Result:', result);
+    console.log('🎯 Score:', result.compatibility_score);
+    console.log('💡 Recommendation:', result.recommendation);
+    console.log('📋 Explanation:', result.explanation);
+    console.log('✅ ========== GROQ API CALL SUCCESS ==========\n');
+
+    return {
+      success: true,
+      data: result,
+      timestamp: Date.now(),
+      source: 'groq'
+    };
+
   } catch (error) {
-    console.error('❌ ========== GROQ PROXY CALL FAILED ==========');
+    console.error('❌ ========== GROQ API CALL FAILED ==========');
     console.error('Error:', error.message);
     console.error('Stack:', error.stack);
     console.error('❌ ==========================================\n');
-    
+
     throw error;
   }
 }
-

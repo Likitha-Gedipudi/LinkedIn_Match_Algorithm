@@ -733,56 +733,56 @@ function showMatchModal(matchData) {
     <div class="linkedin-match-modal-content">
       <button class="linkedin-match-modal-close" aria-label="Close">✕</button>
       
-      <div class="modal-header">
+      <div class="linkedin-match-modal-header">
         <h2>${scoreEmoji} Compatibility Analysis</h2>
-        <div class="modal-profile-info">
-          <div class="modal-profile-name">${matchData.profileName}</div>
-          ${matchData.headline ? `<div class="modal-profile-headline">${matchData.headline}</div>` : ''}
+        <div class="linkedin-match-modal-subtitle">
+          <div class="linkedin-match-modal-title">${matchData.profileName}</div>
+          ${matchData.headline ? `<div class="linkedin-match-modal-subtitle">${matchData.headline}</div>` : ''}
         </div>
       </div>
       
-      <div class="modal-score-section">
-        <div class="modal-score-circle ${scoreClass}">
-          <div class="modal-score-value">${matchData.score.toFixed(1)}</div>
-          <div class="modal-score-label">/ 100</div>
+      <div class="linkedin-match-modal-body">
+        <div class="linkedin-match-score-circle ${scoreClass}">
+          <div class="linkedin-match-score-value">${matchData.score.toFixed(1)}</div>
+          <div class="linkedin-match-score-max">/ 100</div>
         </div>
-        <div class="modal-recommendation ${scoreClass}">
+        <div class="linkedin-match-recommendation ${scoreClass}">
           ${matchData.recommendation}
         </div>
       </div>
       
-      <div class="modal-details-section">
+      <div class="linkedin-match-modal-body">
         <h3>🔍 Profile Comparison</h3>
-        <div class="modal-comparison">
+        <div class="linkedin-match-comparison">
           ${comparisonHTML}
         </div>
       </div>
       
-      <div class="modal-details-section">
+      <div class="linkedin-match-modal-body">
         <h3>🎯 Score Breakdown & Reasoning</h3>
-        <div class="modal-reasoning">
+        <div class="linkedin-match-explanation">
           ${factorsHTML}
         </div>
       </div>
       
-      <div class="modal-details-section" style="margin-top: 16px;">
+      <div class="linkedin-match-modal-body" style="margin-top: 16px;">
         <h3>📋 Summary</h3>
-        <div class="modal-explanation">
+        <div class="linkedin-match-explanation">
           ${matchData.explanation.split(' | ').map(factor => `
-            <div class="modal-factor">
-              <span class="factor-icon">•</span>
-              <span class="factor-text">${factor}</span>
+            <div class="linkedin-match-explanation-item">
+              <span class="linkedin-match-explanation-icon">•</span>
+              <span class="linkedin-match-explanation-text">${factor}</span>
             </div>
           `).join('')}
         </div>
       </div>
       
-      <div class="modal-actions">
-        <button class="modal-btn modal-btn-secondary" id="modal-export">📊 Export Data</button>
-        <button class="modal-btn modal-btn-primary" id="modal-view-profile">👤 View Profile</button>
+      <div class="linkedin-match-modal-footer">
+        <button class="modal-btn linkedin-match-btn-secondary" id="modal-export">📊 Export Data</button>
+        <button class="modal-btn linkedin-match-btn-primary" id="modal-view-profile">👤 View Profile</button>
       </div>
       
-      ${matchData.fromCache ? '<div class="modal-cache-badge">📌 From cache</div>' : ''}
+      ${matchData.fromCache ? '<div class="linkedin-match-cache-badge">📌 From cache</div>' : ''}
     </div>
   `;
 
@@ -815,75 +815,74 @@ function generateProfileComparison(matchData) {
   const user = matchData.userProfile || {};
 
   return `
-    <div class="comparison-table">
-      <div class="comparison-row comparison-header">
-        <div class="comparison-cell"></div>
-        <div class="comparison-cell">👤 You</div>
-        <div class="comparison-cell">🎯 ${matchData.profileName}</div>
-      </div>
-      
-      <div class="comparison-row">
-        <div class="comparison-cell comparison-label">Name</div>
-        <div class="comparison-cell">${user.name || '-'}</div>
-        <div class="comparison-cell">${target.name || '-'}</div>
-      </div>
-      
-      <div class="comparison-row">
-        <div class="comparison-cell comparison-label">Headline</div>
-        <div class="comparison-cell">${user.headline || '-'}</div>
-        <div class="comparison-cell">${target.headline || '-'}</div>
-      </div>
-      
-      <div class="comparison-row">
-        <div class="comparison-cell comparison-label">Skills</div>
-        <div class="comparison-cell">
-          <div class="skill-pills">
-            ${(user.skills || []).slice(0, 5).map(skill => `<span class="skill-pill">${skill}</span>`).join('')}
-            ${(user.skills?.length || 0) > 5 ? `<span class="skill-more">+${user.skills.length - 5} more</span>` : ''}
-          </div>
-        </div>
-        <div class="comparison-cell">
-          <div class="skill-pills">
-            ${(target.skills || []).slice(0, 5).map(skill => `<span class="skill-pill">${skill}</span>`).join('')}
-            ${(target.skills?.length || 0) > 5 ? `<span class="skill-more">+${target.skills.length - 5} more</span>` : ''}
-          </div>
-        </div>
-      </div>
-      
-      <div class="comparison-row">
-        <div class="comparison-cell comparison-label">Experience</div>
-        <div class="comparison-cell">${user.experienceYears || '-'} years</div>
-        <div class="comparison-cell">${target.experience?.length || '-'} positions</div>
-      </div>
-      
-      <div class="comparison-row">
-        <div class="comparison-cell comparison-label">Connections</div>
-        <div class="comparison-cell">${user.connections || '-'}</div>
-        <div class="comparison-cell">${target.connections || '-'}</div>
-      </div>
-      
-      <div class="comparison-row">
-        <div class="comparison-cell comparison-label">Location</div>
-        <div class="comparison-cell">${user.location || '-'}</div>
-        <div class="comparison-cell">${target.location || '-'}</div>
-      </div>
-      
-      <div class="comparison-row">
-        <div class="comparison-cell comparison-label">Industry</div>
-        <div class="comparison-cell">${user.industry || '-'}</div>
-        <div class="comparison-cell">-</div>
-      </div>
-      
-      <div class="comparison-row">
-        <div class="comparison-cell comparison-label">Seniority</div>
-        <div class="comparison-cell">${user.seniority || '-'}</div>
-        <div class="comparison-cell">-</div>
-      </div>
-    </div>
-    
-    <div class="comparison-note">
-      💡 This data was extracted from both profiles and used to calculate the compatibility score above.
-    </div>
+    <table class="linkedin-match-comparison-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>👤 You</th>
+          <th>🎯 ${matchData.profileName}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="linkedin-match-comparison-label">Name</td>
+          <td>${user.name || '-'}</td>
+          <td>${target.name || '-'}</td>
+        </tr>
+        
+        <tr>
+          <td class="linkedin-match-comparison-label">Headline</td>
+          <td>${user.headline || '-'}</td>
+          <td>${target.headline || '-'}</td>
+        </tr>
+        
+        <tr>
+          <td class="linkedin-match-comparison-label">Skills</td>
+          <td>
+            <div class="skill-pills">
+              ${(user.skills || []).slice(0, 5).map(skill => `<span class="skill-pill">${skill}</span>`).join('')}
+              ${(user.skills?.length || 0) > 5 ? `<span class="skill-more">+${user.skills.length - 5} more</span>` : ''}
+            </div>
+          </td>
+          <td>
+            <div class="skill-pills">
+              ${(target.skills || []).slice(0, 5).map(skill => `<span class="skill-pill">${skill}</span>`).join('')}
+              ${(target.skills?.length || 0) > 5 ? `<span class="skill-more">+${target.skills.length - 5} more</span>` : ''}
+            </div>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="linkedin-match-comparison-label">Experience</td>
+          <td>${user.experienceYears || '-'} years</td>
+          <td>${target.experience?.length || '-'} positions</td>
+        </tr>
+        
+        <tr>
+          <td class="linkedin-match-comparison-label">Connections</td>
+          <td>${user.connections || '-'}</td>
+          <td>${target.connections || '-'}</td>
+        </tr>
+        
+        <tr>
+          <td class="linkedin-match-comparison-label">Location</td>
+          <td>${user.location || '-'}</td>
+          <td>${target.location || '-'}</td>
+        </tr>
+        
+        <tr>
+          <td class="linkedin-match-comparison-label">Industry</td>
+          <td>${user.industry || '-'}</td>
+          <td>-</td>
+        </tr>
+        
+        <tr>
+          <td class="linkedin-match-comparison-label">Seniority</td>
+          <td>${user.seniority || '-'}</td>
+          <td>-</td>
+        </tr>
+      </tbody>
+    </table>
   `;
 }
 

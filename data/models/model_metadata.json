@@ -1,0 +1,22 @@
+{
+  "model_type": "XGBoost",
+  "features": [
+    "skill_match_score",
+    "skill_complementarity_score",
+    "network_value_a_to_b",
+    "network_value_b_to_a",
+    "career_alignment_score",
+    "experience_gap",
+    "industry_match",
+    "geographic_score",
+    "seniority_match"
+  ],
+  "metrics": {
+    "rmse": 0.21736666695765822,
+    "mae": 0.15260593723220828,
+    "r2": 0.9991942387024335
+  },
+  "train_samples": 400000,
+  "test_samples": 100000,
+  "trained_at": "2026-01-09T19:38:00.142601"
+}

@@ -1,0 +1,47 @@
+{
+  "model_type": "XGBoost",
+  "features": [
+    "user_exp",
+    "user_seniority_enc",
+    "user_connections",
+    "user_role_enc",
+    "user_industry_enc",
+    "user_strength",
+    "target_exp",
+    "target_seniority_enc",
+    "target_connections",
+    "target_role_enc",
+    "target_industry_enc",
+    "target_strength",
+    "exp_gap",
+    "seniority_gap",
+    "connection_gap",
+    "strength_gap",
+    "same_role",
+    "same_industry",
+    "mentorship_score",
+    "network_score",
+    "skill_learning_score",
+    "role_synergy_score",
+    "alumni_score",
+    "career_score",
+    "industry_score"
+  ],
+  "metrics": {
+    "rmse": 0.1894083623214454,
+    "mae": 0.09394200542449946,
+    "r2": 0.9998312978919357,
+    "cv_mean": 0.9997702009404188,
+    "cv_std": 2.1023204583122123e-05
+  },
+  "weight_distribution": {
+    "mentorship_potential": 0.25,
+    "network_value": 0.2,
+    "skill_learning": 0.2,
+    "role_synergy": 0.15,
+    "career_advancement": 0.1,
+    "industry_match": 0.1
+  },
+  "train_samples": 39999,
+  "test_samples": 10000
+}

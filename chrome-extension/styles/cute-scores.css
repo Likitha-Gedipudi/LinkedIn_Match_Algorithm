@@ -1,0 +1,219 @@
+/* CUTE SCORE BREAKDOWN - Card-based Design */
+.linkedin-match-explanation {
+    background: transparent;
+    margin: 20px 0;
+}
+
+.linkedin-match-explanation h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #000000;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Cute Category Cards */
+.factor-category {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 2px solid #E8EEF3;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s;
+}
+
+.factor-category:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(10, 102, 194, 0.12);
+    border-color: #D0E1F9;
+}
+
+.factor-category-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #F0F4F8;
+}
+
+.factor-category-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.factor-category-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #000000;
+    letter-spacing: 0.3px;
+}
+
+/* Individual Score Items - Cute Cards */
+.factor-item {
+    background: white;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 14px;
+    border: 1px solid #E8EEF3;
+    transition: all 0.2s;
+}
+
+.factor-item:hover {
+    border-color: #C6D9F1;
+    box-shadow: 0 4px 12px rgba(10, 102, 194, 0.08);
+}
+
+.factor-item:last-child {
+    margin-bottom: 0;
+}
+
+.factor-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.factor-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.factor-score {
+    font-size: 16px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    min-width: 55px;
+    text-align: center;
+}
+
+.factor-score.score-excellent {
+    background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+    color: #047857;
+    border: 2px solid #6EE7B7;
+}
+
+.factor-score.score-good {
+    background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+    color: #1D4ED8;
+    border: 2px solid #93C5FD;
+}
+
+.factor-score.score-moderate {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    color: #B45309;
+    border: 2px solid #FCD34D;
+}
+
+.factor-score.score-low {
+    background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+    color: #B91C1C;
+    border: 2px solid #FCA5A5;
+}
+
+/* Cute Progress Bars */
+.factor-progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #F0F4F8;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) inset;
+}
+
+.factor-progress-fill {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+}
+
+.factor-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 100%);
+    border-radius: 20px;
+}
+
+.factor-progress-fill.score-excellent {
+    background: linear-gradient(90deg, #10B981 0%, #059669 100%);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.factor-progress-fill.score-good {
+    background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.factor-progress-fill.score-moderate {
+    background: linear-gradient(90deg, #F59E0B 0%, #D97706 100%);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+.factor-progress-fill.score-low {
+    background: linear-gradient(90deg, #EF4444 0%, #DC2626 100%);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+.factor-description {
+    font-size: 13px;
+    color: #6B7280;
+    line-height: 1.5;
+    font-style: normal;
+}
+
+/* CUTE SUMMARY SECTION */
+.linkedin-match-explanation-item {
+    background: white;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    border: 2px solid #E8EEF3;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: all 0.2s;
+}
+
+.linkedin-match-explanation-item:hover {
+    border-color: #C6D9F1;
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(10, 102, 194, 0.08);
+}
+
+.linkedin-match-explanation-item:last-child {
+    margin-bottom: 0;
+}
+
+.linkedin-match-explanation-icon {
+    color: #0A66C2;
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    background: #EBF5FF;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.linkedin-match-explanation-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #374151;
+    margin: 0;
+    flex: 1;
+}

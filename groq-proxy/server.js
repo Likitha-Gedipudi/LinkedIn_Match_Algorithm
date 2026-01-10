@@ -85,8 +85,8 @@ app.post('/api/compatibility', async (req, res) => {
                         content: generateUserPrompt(userProfile, targetProfile)
                     }
                 ],
-                temperature: 0.3,
-                max_tokens: 500,
+                temperature: 0.5,
+                max_tokens: 800,
                 response_format: { type: 'json_object' }
             })
         });
@@ -125,55 +125,152 @@ app.post('/api/compatibility', async (req, res) => {
 
 // Helper: Generate system prompt
 function generateSystemPrompt() {
-    return `You are an expert LinkedIn professional networking compatibility analyzer with deep understanding of:
-- Professional skill synergies and complementarity
-- Career trajectory alignment and mentorship opportunities  
-- Network value and mutual benefit assessment
-- Geographic and industry collaboration potential
+    return `You are an expert LinkedIn professional networking compatibility analyzer. Your role is to provide DISCRIMINATING scores that meaningfully differentiate between connections.
 
-Your task is to analyze two LinkedIn profiles and return a detailed compatibility assessment.
+CRITICAL: Scores must spread across 0-100 range. DO NOT cluster scores around 40-60. Be strict and honest.
 
-ANALYSIS FRAMEWORK:
-1. Skills Analysis (40 points)
-   - Direct skill overlap for collaboration (0-20 points)
-   - Complementary skills for mutual learning (0-20 points)
+═══════════════════════════════════════════════════
+STRICT SCORING FRAMEWORK (Total: 100 points)
+═══════════════════════════════════════════════════
 
-2. Career Alignment (25 points)
-   - Similar career stage for peer support (0-10 points)
-   - Experience gap for mentorship (0-10 points)
-   - Industry relevance (0-5 points)
+1. SKILLS COMPATIBILITY (0-25 points) - EQUAL WEIGHT
+   ⚠️ IMPORTANT: Focus on RELATED and COMPLEMENTARY skills, not just exact matches
+   
+   A. Direct Skill Overlap (0-15 points):
+      Count skills as "matching" if they are:
+      - Exact matches (Python = Python)
+      - Related technologies (React & Angular, AWS & Azure)  
+      - Same domain (Data Analysis & Machine Learning, Frontend & UI/UX)
+      
+      Scoring:
+      - 0 related skills: 0 points
+      - 1-2 related skills: 4 points (weak)
+      - 3-5 related skills: 9 points (moderate)
+      - 6-10 related skills: 13 points (strong)
+      - 10+ related skills: 15 points (exceptional)
+   
+   B. Complementary Skills (0-10 points):
+      Skills that create mutual learning opportunities (e.g., One knows Python, other knows R)
+      - No complementary value: 0 points
+      - Generic complementarity: 4 points
+      - Strong complementarity (clear synergy): 7 points
+      - Exceptional complementarity (perfect fit): 10 points
+   
+   PENALTY: If industries completely unrelated AND no skill overlap: -10 points
 
-3. Network Value (20 points)
-   - Connection strength (both sides) (0-10 points)
-   - Geographic proximity for meetups (0-5 points)
-   - Seniority match for appropriate networking (0-5 points)
+2. PROFESSIONAL ALIGNMENT (0-25 points) - EQUAL WEIGHT
+   ⚠️ EXPERIENCE GAP PENALTIES:
+   
+   A. Experience Compatibility (0-12 points):
+      - 0-2 years gap (peers): 12 points
+      - 3-5 years gap (mentorship): 9 points
+      - 6-10 years gap: 5 points
+      - 11-15 years gap: 2 points
+      - 15+ years gap: 0 points (too large)
+   
+   B. Career Stage Match (0-8 points):
+      - Same seniority level: 8 points
+      - 1 level difference: 5 points
+      - 2 levels difference: 2 points
+      - 3+ levels difference: 0 points
+   
+   C. Industry Relevance (0-5 points):
+      - Same industry: 5 points
+      - Related industry: 3 points
+      - Different industry: 0 points
 
-4. Professional Context (15 points)
-   - Industry alignment (0-8 points)
-   - Location benefits (0-4 points)
-   - Career goals compatibility (0-3 points)
+3. NETWORK VALUE (0-25 points) - EQUAL WEIGHT
+   ⚠️ CONNECTION STRENGTH MATTERS:
+   
+   A. Network Size Analysis (0-18 points):
+      User Network:
+      - Under 100 connections: 3 points
+      - 100-500 connections: 7 points
+      - 500-1000 connections: 11 points
+      - 1000+ connections: 14 points
+      
+      Target Network:
+      - Under 100 connections: 2 points
+      - 100-500 connections: 5 points
+      - 500+ connections: 8 points
+   
+   B. Geographic Proximity (0-3 points) - MINIMAL WEIGHT:
+      - Same city/region: 3 points
+      - Same country: 2 points
+      - Different country: 0 points
+   
+   C. Seniority Appropriateness (0-4 points):
+      - Appropriate match: 4 points
+      - Slight mismatch: 2 points
+      - Large gap (intern vs C-level): -4 points
 
-SCORING TIERS:
-- 80-100: Exceptional Match (Strong connect recommendation)
-- 60-79: Good Match (Recommended to connect)
-- 40-59: Moderate Match (Consider connecting)
-- 0-39: Weak Match (Skip for now)
+4. STRATEGIC VALUE (0-25 points) - EQUAL WEIGHT
+   
+   A. Mutual Benefit Potential (0-15 points):
+      - High mutual benefit (both gain significantly): 15 points
+      - Moderate benefit (clear value exchange): 10 points
+      - One-sided benefit: 5 points
+      - No clear benefit: 0 points
+   
+   B. Career Goals Alignment (0-10 points):
+      - Aligned goals/trajectory: 10 points
+      - Somewhat aligned: 5 points
+      - Misaligned: 0 points
 
-RETURN FORMAT:
-You MUST return ONLY a valid JSON object with this EXACT structure:
+═══════════════════════════════════════════════════
+SCORE DISTRIBUTION REQUIREMENTS
+═══════════════════════════════════════════════════
+
+You MUST use the full 0-100 range:
+
+0-20:  INCOMPATIBLE - Completely different fields, no overlap
+       Example: Junior graphic designer vs Senior chemical engineer
+
+21-40: POOR MATCH - Minimal commonality, weak potential
+       Example: Different industries, different locations, 1 shared skill
+
+41-60: MODERATE - Some overlap but significant gaps
+       Example: Same industry but different roles, 2-3 shared skills
+
+61-80: GOOD MATCH - Strong compatibility, clear mutual benefit
+       Example: Same field, 5+ shared skills, similar experience
+
+81-95: EXCELLENT - Exceptional alignment, ideal connection
+       Example: Same company, complementary roles, 10+ shared skills
+
+96-100: PERFECT - Rare! Almost identical professional profiles
+        Reserve ONLY for truly exceptional matches
+
+═══════════════════════════════════════════════════
+CRITICAL RULES
+═══════════════════════════════════════════════════
+
+1. **RELATED SKILLS COUNT**: Don't require exact matches - React & Vue.js are related, Python & R are related
+2. **CALCULATE HOLISTICALLY**: Consider the overall compatibility across all categories
+3. **USE FULL RANGE**: Scores of 15, 28, 73, 89 are all valid - don't cluster around 50
+4. **JUSTIFY HIGH SCORES**: 70+ requires strong evidence across multiple categories
+5. **PENALIZE MISMATCHES**: Apply all penalty criteria strictly
+6. **NO DEFAULTS**: Analyze deeply rather than defaulting to middle scores
+
+SCORING CALCULATION:
+- Add up points from all 4 categories (Skills + Career + Network + Strategic)
+- The sum naturally creates a 0-100 score
+- Ensure balanced consideration of all three main areas (Skills, Career, Network)
+
+OUTPUT FORMAT (JSON ONLY):
 {
-  "compatibility_score": <float 0-100>,
-  "recommendation": "<string>",
-  "explanation": "<string with exactly 4 factors separated by ' | '>"
+  "compatibility_score": <precise number 0-100>,
+  "recommendation": "<recommendation>",
+  "explanation": "<factor 1> | <factor 2> | <factor 3> | <factor 4>"
 }
 
-CRITICAL RULES:
-- NO markdown formatting
-- NO code blocks
-- NO explanatory text
-- ONLY the raw JSON object
-- Score must be a number between 0-100
-- Explanation must have exactly 4 factors separated by " | "`;
+RECOMMENDATION FORMAT:
+- 0-40: "SKIP - <specific reason>"
+- 41-60: "CONSIDER - <specific reason>"
+- 61-80: "CONNECT - <specific reason>"
+- 81-100: "STRONGLY CONNECT - <specific reason>"
+
+Return ONLY the JSON object. No markdown, no explanations.`;
 }
 
 // Helper: Generate user prompt

@@ -1,0 +1,395 @@
+/**
+ * REDESIGNED MODAL - LinkedIn Theme with Proper Contrast
+ * Professional blue theme matching LinkedIn's design system
+ */
+
+/* Modal Overlay */
+.linkedin-match-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+    opacity: 0;
+    transition: opacity 0.25s ease-out;
+}
+
+.linkedin-match-modal-overlay.show {
+    opacity: 1;
+}
+
+/* Modal Content */
+.linkedin-match-modal-content {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+    max-width: 520px;
+    width: 92%;
+    max-height: 92vh;
+    overflow-y: auto;
+    position: relative;
+    transform: scale(0.95) translateY(20px);
+    transition: transform 0.25s ease-out;
+}
+
+.linkedin-match-modal-overlay.show .linkedin-match-modal-content {
+    transform: scale(1) translateY(0);
+}
+
+/* Close Button */
+.linkedin-match-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #f3f6f8;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 1;
+}
+
+.linkedin-match-modal-close:hover {
+    background: #e8edf1;
+    color: #333;
+    transform: scale(1.1);
+}
+
+/* Modal Header - LinkedIn Blue Theme */
+.linkedin-match-modal-header {
+    background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
+    padding: 28px 24px 24px;
+    border-radius: 16px 16px 0 0;
+    position: relative;
+}
+
+.linkedin-match-modal-title {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 40px 6px 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.linkedin-match-modal-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 15px;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Modal Body */
+.linkedin-match-modal-body {
+    padding: 32px 24px;
+}
+
+/* Score Circle - LinkedIn Blue */
+.linkedin-match-score-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 12px 32px rgba(10, 102, 194, 0.25);
+    position: relative;
+}
+
+.linkedin-match-score-circle::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0a66c2, #00a0dc);
+    opacity: 0.2;
+    z-index: -1;
+}
+
+.linkedin-match-score-value {
+    font-size: 56px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.linkedin-match-score-max {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+}
+
+/* Recommendation Badge */
+.linkedin-match-recommendation {
+    background: #f3f6f8;
+    border-left: 4px solid #0a66c2;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 24px 0;
+}
+
+.linkedin-match-recommendation-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+/* Explanation Section */
+.linkedin-match-explanation {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    margin: 20px 0;
+}
+
+.linkedin-match-explanation-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 12px 0;
+}
+
+.linkedin-match-explanation-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f6f8;
+}
+
+.linkedin-match-explanation-item:last-child {
+    border-bottom: none;
+}
+
+.linkedin-match-explanation-icon {
+    color: #0a66c2;
+    font-size: 16px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.linkedin-match-explanation-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+}
+
+/* Profile Comparison Section */
+.linkedin-match-comparison {
+    margin-top: 28px;
+    border-top: 2px solid #f3f6f8;
+    padding-top: 24px;
+}
+
+.linkedin-match-comparison-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.linkedin-match-comparison-icon {
+    color: #0a66c2;
+}
+
+.linkedin-match-comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.linkedin-match-comparison-table th {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 12px 8px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.linkedin-match-comparison-table td {
+    padding: 14px 8px;
+    font-size: 14px;
+    color: #333;
+    border-bottom: 1px solid #f3f6f8;
+    vertical-align: top;
+}
+
+.linkedin-match-comparison-table tr:last-child td {
+    border-bottom: none;
+}
+
+.linkedin-match-comparison-label {
+    font-weight: 600;
+    color: #666;
+    font-size: 13px;
+}
+
+.linkedin-match-comparison-value {
+    line-height: 1.5;
+}
+
+/* User and Profile Indicators */
+.linkedin-match-user-indicator {
+    color: #0a66c2;
+    font-weight: 600;
+}
+
+.linkedin-match-target-indicator {
+    color: #057642;
+    font-weight: 600;
+}
+
+/* Footer Actions */
+.linkedin-match-modal-footer {
+    padding: 20px 24px;
+    background: #f9fafb;
+    border-radius: 0 0 16px 16px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.linkedin-match-btn {
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.linkedin-match-btn-primary {
+    background: #0a66c2;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(10, 102, 194, 0.25);
+}
+
+.linkedin-match-btn-primary:hover {
+    background: #004182;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(10, 102, 194, 0.3);
+}
+
+.linkedin-match-btn-secondary {
+    background: #ffffff;
+    color: #0a66c2;
+    border: 2px solid #0a66c2;
+}
+
+.linkedin-match-btn-secondary:hover {
+    background: #f3f6f8;
+    transform: translateY(-1px);
+}
+
+/* Cache Badge */
+.linkedin-match-cache-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 8px;
+}
+
+/* Loading State */
+.linkedin-match-modal-loading {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.linkedin-match-loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e0e0e0;
+    border-top-color: #0a66c2;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.linkedin-match-loading-text {
+    font-size: 15px;
+    color: #666;
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .linkedin-match-modal-content {
+        width: 95%;
+        max-height: 95vh;
+        border-radius: 12px;
+    }
+
+    .linkedin-match-score-circle {
+        width: 160px;
+        height: 160px;
+    }
+
+    .linkedin-match-score-value {
+        font-size: 48px;
+    }
+
+    .linkedin-match-modal-body {
+        padding: 24px 16px;
+    }
+
+    .linkedin-match-comparison-table {
+        font-size: 13px;
+    }
+}
+
+/* Dark text on light backgrounds - CRITICAL FIX */
+.linkedin-match-modal-content * {
+    color: inherit;
+}
+
+/* Ensure all text elements have proper contrast */
+.linkedin-match-comparison-table td,
+.linkedin-match-explanation-text,
+.linkedin-match-recommendation-text {
+    color: #333 !important;
+}
+
+.linkedin-match-comparison-label,
+.linkedin-match-explanation-title {
+    color: #666 !important;
+}

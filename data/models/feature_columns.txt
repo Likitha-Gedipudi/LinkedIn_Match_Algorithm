@@ -1,0 +1,9 @@
+skill_match_score
+skill_complementarity_score
+network_value_a_to_b
+network_value_b_to_a
+career_alignment_score
+experience_gap
+industry_match
+geographic_score
+seniority_match
