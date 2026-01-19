@@ -157,6 +157,192 @@ function estimateSeniority(experienceYears) {
     return 'executive';
 }
 
+// ========== ROLE FAMILY AFFINITY SYSTEM ==========
+// Gives bonus points when target is in a related career field
+
+/**
+ * Define role families - roles that share career paths and can help each other
+ */
+const ROLE_FAMILIES = {
+    'DATA': {
+        name: 'Data & Analytics',
+        keywords: ['data scientist', 'data analyst', 'data engineer', 'ml engineer', 'machine learning',
+            'analytics', 'business intelligence', 'bi developer', 'statistician', 'research scientist',
+            'ai engineer', 'nlp', 'deep learning', 'data architect', 'analytics engineer', 'mlops'],
+        seniorKeywords: ['lead', 'senior', 'staff', 'principal', 'head of', 'director', 'vp', 'chief data'],
+        adjacentFamilies: ['SOFTWARE', 'PRODUCT']  // Related families that also get a small bonus
+    },
+    'SOFTWARE': {
+        name: 'Software Engineering',
+        keywords: ['software engineer', 'developer', 'frontend', 'backend', 'fullstack', 'full stack',
+            'devops', 'sre', 'site reliability', 'platform engineer', 'cloud engineer', 'ios developer',
+            'android developer', 'mobile developer', 'web developer', 'systems engineer', 'infrastructure'],
+        seniorKeywords: ['lead', 'senior', 'staff', 'principal', 'architect', 'director', 'vp', 'cto'],
+        adjacentFamilies: ['DATA', 'PRODUCT', 'DEVOPS']
+    },
+    'PRODUCT': {
+        name: 'Product & Strategy',
+        keywords: ['product manager', 'product owner', 'program manager', 'technical pm', 'tpm',
+            'product lead', 'product director', 'strategy', 'growth', 'product analyst'],
+        seniorKeywords: ['senior', 'lead', 'director', 'vp', 'head of', 'chief product'],
+        adjacentFamilies: ['DATA', 'SOFTWARE', 'DESIGN']
+    },
+    'DESIGN': {
+        name: 'Design & UX',
+        keywords: ['ux designer', 'ui designer', 'product designer', 'ux researcher', 'user research',
+            'visual designer', 'interaction designer', 'design lead', 'creative director'],
+        seniorKeywords: ['senior', 'lead', 'principal', 'director', 'head of design'],
+        adjacentFamilies: ['PRODUCT', 'SOFTWARE']
+    },
+    'MARKETING': {
+        name: 'Marketing & Growth',
+        keywords: ['marketing', 'growth', 'seo', 'content', 'brand', 'digital marketing', 'social media',
+            'performance marketing', 'demand gen', 'marketing analyst', 'marketing manager'],
+        seniorKeywords: ['senior', 'lead', 'director', 'vp', 'cmo', 'head of'],
+        adjacentFamilies: ['PRODUCT', 'SALES', 'DATA']
+    },
+    'FINANCE': {
+        name: 'Finance & Analytics',
+        keywords: ['financial analyst', 'finance', 'investment', 'risk', 'quant', 'quantitative',
+            'portfolio', 'trading', 'fintech', 'banking', 'cfa', 'actuary', 'compliance'],
+        seniorKeywords: ['senior', 'lead', 'director', 'vp', 'cfo', 'manager'],
+        adjacentFamilies: ['DATA', 'CONSULTING']
+    },
+    'CONSULTING': {
+        name: 'Consulting & Strategy',
+        keywords: ['consultant', 'consulting', 'strategy', 'advisory', 'management consultant',
+            'business analyst', 'transformation', 'implementation'],
+        seniorKeywords: ['senior', 'manager', 'principal', 'partner', 'director'],
+        adjacentFamilies: ['PRODUCT', 'FINANCE', 'DATA']
+    },
+    'OPERATIONS': {
+        name: 'Operations & Supply Chain',
+        keywords: ['operations', 'supply chain', 'logistics', 'process', 'ops', 'project manager',
+            'program manager', 'scrum master', 'agile coach', 'delivery manager'],
+        seniorKeywords: ['senior', 'lead', 'director', 'vp', 'coo', 'head of'],
+        adjacentFamilies: ['PRODUCT', 'SOFTWARE']
+    },
+    'HR_RECRUITING': {
+        name: 'HR & Talent',
+        keywords: ['recruiter', 'talent', 'hr', 'human resources', 'people operations', 'hiring',
+            'talent acquisition', 'sourcer', 'employer brand'],
+        seniorKeywords: ['senior', 'lead', 'director', 'vp', 'head of'],
+        adjacentFamilies: []  // HR is useful for everyone but doesn't have adjacent families
+    }
+};
+
+/**
+ * Detect which role family a headline belongs to
+ */
+function detectRoleFamily(headline) {
+    if (!headline) return null;
+
+    const lowerHeadline = headline.toLowerCase();
+
+    for (const [familyKey, family] of Object.entries(ROLE_FAMILIES)) {
+        if (family.keywords.some(keyword => lowerHeadline.includes(keyword))) {
+            // Check if senior
+            const isSenior = family.seniorKeywords.some(k => lowerHeadline.includes(k));
+            return {
+                family: familyKey,
+                name: family.name,
+                isSenior: isSenior,
+                adjacentFamilies: family.adjacentFamilies
+            };
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Calculate Role Family Affinity bonus
+ * Returns a bonus score (0-40) based on how related the roles are
+ */
+function calculateRoleFamilyAffinity(userHeadline, targetHeadline) {
+    const userRole = detectRoleFamily(userHeadline);
+    const targetRole = detectRoleFamily(targetHeadline);
+
+    // If we can't detect either role, no bonus
+    if (!userRole || !targetRole) {
+        return { bonus: 0, reason: null };
+    }
+
+    let bonus = 0;
+    let reason = '';
+
+    // SAME FAMILY - Highest bonus
+    if (userRole.family === targetRole.family) {
+        bonus = 30;
+        reason = `Same field (${targetRole.name})`;
+
+        // Extra bonus if target is senior (mentorship potential)
+        if (targetRole.isSenior && !userRole.isSenior) {
+            bonus += 10;
+            reason += ' + Senior (can mentor you)';
+        }
+        // Slight bonus for same level peers
+        else if (targetRole.isSenior === userRole.isSenior) {
+            bonus += 5;
+            reason += ' + Peer (referrals & tips)';
+        }
+    }
+    // ADJACENT FAMILY - Medium bonus
+    else if (userRole.adjacentFamilies.includes(targetRole.family)) {
+        bonus = 20;
+        reason = `Related field (${targetRole.name})`;
+
+        // Bonus if target is senior in adjacent field
+        if (targetRole.isSenior) {
+            bonus += 5;
+            reason += ' + Senior';
+        }
+    }
+    // HR/RECRUITING - Special case: always useful for job seekers
+    else if (targetRole.family === 'HR_RECRUITING') {
+        // Check if recruiter is in tech/data
+        const targetLower = targetHeadline.toLowerCase();
+        const recruitsForTech = ['tech', 'software', 'data', 'engineering', 'ml', 'ai'].some(k => targetLower.includes(k));
+
+        if (recruitsForTech) {
+            bonus = 25;
+            reason = 'Tech Recruiter (can help you get hired!)';
+        } else {
+            bonus = 10;
+            reason = 'Recruiter (may know opportunities)';
+        }
+    }
+
+    return { bonus, reason };
+}
+
+/**
+ * Get detailed role affinity breakdown for display
+ */
+function getRoleFamilyBreakdown(userHeadline, targetHeadline) {
+    const userRole = detectRoleFamily(userHeadline);
+    const targetRole = detectRoleFamily(targetHeadline);
+    const affinity = calculateRoleFamilyAffinity(userHeadline, targetHeadline);
+
+    return {
+        userFamily: userRole ? userRole.name : 'Unknown',
+        targetFamily: targetRole ? targetRole.name : 'Unknown',
+        userIsSenior: userRole ? userRole.isSenior : false,
+        targetIsSenior: targetRole ? targetRole.isSenior : false,
+        bonus: affinity.bonus,
+        reason: affinity.reason
+    };
+}
+
+// Export for use in other scripts
+if (typeof window !== 'undefined') {
+    window.calculateRoleFamilyAffinity = calculateRoleFamilyAffinity;
+    window.detectRoleFamily = detectRoleFamily;
+    window.getRoleFamilyBreakdown = getRoleFamilyBreakdown;
+    window.ROLE_FAMILIES = ROLE_FAMILIES;
+}
+
+
 /**
  * Calculate skill match score (overlap)
  */

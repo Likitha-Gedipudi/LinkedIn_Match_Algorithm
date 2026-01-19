@@ -525,6 +525,14 @@ async function calculateFeatures(profileData) {
   const geographic_score = calculateGeographicScore(location, userProfile.location || 'Unknown');
   const seniority_match = calculateSeniorityMatch(seniority, userProfile.seniority || 'mid');
 
+  // NEW: Role Family Affinity - bonus for related career fields
+  const roleAffinity = calculateRoleFamilyAffinity(
+    userProfile.headline || '',
+    profileData.headline || ''
+  );
+  const role_family_bonus = roleAffinity.bonus || 0;
+  const role_family_reason = roleAffinity.reason || null;
+
   // Derived features (9 features)
   const network_value_avg = (network_value_a_to_b + network_value_b_to_a) / 2;
   const network_value_diff = Math.abs(network_value_a_to_b - network_value_b_to_a);
@@ -554,9 +562,13 @@ async function calculateFeatures(profileData) {
     is_mentorship_gap,
     is_peer,
     skill_x_network,
-    career_x_industry
+    career_x_industry,
+    // NEW: Role family affinity
+    role_family_bonus,
+    role_family_reason
   };
 }
+
 
 /**
  * Process My Network page - inject scores for all visible profiles
@@ -1438,6 +1450,17 @@ function generateFactorBreakdown(matchData) {
           label: 'Geographic Proximity',
           value: features.geographic_score || 50,
           description: 'Location-based networking opportunities'
+        }
+      ]
+    },
+    {
+      icon: '🎯',
+      name: 'Role Affinity',
+      factors: [
+        {
+          label: 'Career Path Match',
+          value: Math.min(100, (features.role_family_bonus || 0) * 2.5),  // Scale 0-40 bonus to 0-100%
+          description: features.role_family_reason || 'No role family match detected'
         }
       ]
     }
