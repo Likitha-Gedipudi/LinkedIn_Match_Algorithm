@@ -345,60 +345,302 @@ function calculateIndustryMatch(industryA, industryB) {
 }
 
 /**
- * Calculate geographic score (location proximity)
+ * Calculate geographic score (location proximity) - ENHANCED
+ * Now considers remote work viability and timezone alignment
  */
 function calculateGeographicScore(locationA, locationB) {
-    // Exact location match
-    if (locationA === locationB) {
-        return 90 + Math.random() * 10;
+    if (!locationA || !locationB) return 50;
+
+    const locA = locationA.toLowerCase();
+    const locB = locationB.toLowerCase();
+
+    // Exact city/region match
+    if (locA === locB) {
+        return 95; // Can meet in person for coffee chats
     }
 
-    // Same country regions
-    const sameCountry = (loc1, loc2) => {
-        const countries = ['United States', 'United Kingdom', 'Canada', 'India', 'Germany', 'France', 'Australia'];
-        for (const country of countries) {
-            if (loc1.includes(country) && loc2.includes(country)) {
-                return true;
-            }
-        }
-        return false;
+    // Same metro area detection
+    const metroAreas = {
+        'san francisco': ['bay area', 'san jose', 'palo alto', 'mountain view', 'oakland'],
+        'new york': ['nyc', 'manhattan', 'brooklyn', 'jersey city', 'hoboken'],
+        'seattle': ['bellevue', 'redmond', 'kirkland'],
+        'los angeles': ['la', 'santa monica', 'pasadena', 'burbank'],
+        'boston': ['cambridge', 'somerville'],
+        'chicago': ['evanston', 'oak park'],
+        'bangalore': ['bengaluru', 'electronic city'],
+        'hyderabad': ['hitec city', 'gachibowli'],
+        'delhi': ['gurgaon', 'gurugram', 'noida', 'ncr']
     };
 
-    if (sameCountry(locationA, locationB)) {
-        return 65 + Math.random() * 15; // Same country
+    for (const [metro, areas] of Object.entries(metroAreas)) {
+        const inSameMetro = (locA.includes(metro) || areas.some(a => locA.includes(a))) &&
+            (locB.includes(metro) || areas.some(a => locB.includes(a)));
+        if (inSameMetro) {
+            return 88; // Same metro = easy meetups
+        }
     }
 
-    // Remote work era - geography less important
-    return 40 + Math.random() * 20;
+    // Same country detection
+    const countries = {
+        'united states': ['usa', 'u.s.', 'america'],
+        'india': ['in'],
+        'united kingdom': ['uk', 'england', 'london'],
+        'canada': ['toronto', 'vancouver', 'montreal'],
+        'germany': ['berlin', 'munich', 'frankfurt'],
+        'australia': ['sydney', 'melbourne']
+    };
+
+    for (const [country, aliases] of Object.entries(countries)) {
+        const inSameCountry = (locA.includes(country) || aliases.some(a => locA.includes(a))) &&
+            (locB.includes(country) || aliases.some(a => locB.includes(a)));
+        if (inSameCountry) {
+            return 70; // Same country = same timezone, legal work auth
+        }
+    }
+
+    // Tech hubs get bonus for remote work culture
+    const techHubs = ['san francisco', 'new york', 'seattle', 'austin', 'boston',
+        'bangalore', 'hyderabad', 'london', 'berlin', 'toronto'];
+    const bothInTechHubs = techHubs.some(h => locA.includes(h)) &&
+        techHubs.some(h => locB.includes(h));
+    if (bothInTechHubs) {
+        return 60; // Both in tech hubs = remote-friendly culture
+    }
+
+    // Different countries but remote possible
+    return 45;
 }
 
 /**
- * Calculate seniority match
+ * Calculate seniority match - ENHANCED
+ * Now considers mentorship value and peer networking benefits
  */
 function calculateSeniorityMatch(seniorityA, seniorityB) {
     const levels = { 'entry': 0, 'mid': 1, 'senior': 2, 'executive': 3 };
     const levelA = levels[seniorityA] || 1;
     const levelB = levels[seniorityB] || 1;
 
-    const diff = Math.abs(levelA - levelB);
+    const diff = levelB - levelA; // Positive = target is more senior
 
-    // Same level - peer networking
+    // Same level - peer networking (job referrals, interview tips)
     if (diff === 0) {
-        return 85 + Math.random() * 15;
+        return 85;
     }
 
-    // One level apart - mentorship potential
+    // Target is 1 level above - ideal mentorship
     if (diff === 1) {
-        return 75 + Math.random() * 15;
+        return 90; // They can mentor you AND refer you
     }
 
-    // Two levels apart - still valuable
+    // Target is 2 levels above - stretch networking
     if (diff === 2) {
-        return 55 + Math.random() * 15;
+        return 70; // Valuable but less likely to engage
     }
 
-    // Three levels apart
-    return 35 + Math.random() * 15;
+    // You are more senior than target
+    if (diff === -1) {
+        return 65; // You can mentor them (reverse value)
+    }
+
+    if (diff === -2) {
+        return 50;
+    }
+
+    // 3+ levels apart
+    return 40;
+}
+
+/**
+ * NEW: Calculate comprehensive network value with scenarios
+ * Returns score and detailed reasons for each component
+ */
+function calculateNetworkValueEnhanced(userProfile, targetProfile) {
+    let totalScore = 0;
+    const reasons = [];
+    const breakdown = {};
+
+    // ========== SCENARIO 1: REFERRAL POTENTIAL (0-30 points) ==========
+    let referralScore = 0;
+
+    // Check if target works at desirable company
+    const headline = (targetProfile.headline || '').toLowerCase();
+    const company = extractCompanyFromHeadline(targetProfile.headline || '');
+
+    const topCompanies = {
+        'faang': ['google', 'meta', 'amazon', 'apple', 'netflix', 'microsoft'],
+        'unicorns': ['stripe', 'databricks', 'snowflake', 'openai', 'anthropic', 'figma'],
+        'consulting': ['mckinsey', 'bain', 'bcg', 'deloitte', 'accenture', 'ey', 'pwc', 'kpmg'],
+        'finance': ['goldman', 'jpmorgan', 'morgan stanley', 'citadel', 'two sigma']
+    };
+
+    for (const [tier, companies] of Object.entries(topCompanies)) {
+        if (companies.some(c => headline.includes(c) || company.toLowerCase().includes(c))) {
+            referralScore = 30;
+            reasons.push(`Works at ${company} - high referral value!`);
+            break;
+        }
+    }
+
+    // Hiring manager or recruiter
+    if (referralScore === 0) {
+        if (headline.includes('hiring') || headline.includes('recruiter') ||
+            headline.includes('talent acquisition') || headline.includes('hr ')) {
+            referralScore = 25;
+            reasons.push('Is a recruiter/hiring manager - direct access');
+        } else if (headline.includes('manager') || headline.includes('director') ||
+            headline.includes('lead')) {
+            referralScore = 20;
+            reasons.push('Is a manager - can refer and advocate');
+        } else if (headline.includes('senior') || headline.includes('staff')) {
+            referralScore = 15;
+            reasons.push('Senior role - credible referral source');
+        } else {
+            referralScore = 10;
+            reasons.push('Individual contributor - peer referral');
+        }
+    }
+
+    totalScore += referralScore;
+    breakdown.referral = referralScore;
+
+    // ========== SCENARIO 2: MUTUAL CONNECTIONS (0-25 points) ==========
+    let mutualScore = 0;
+
+    // Note: Mutual connections are hard to extract from DOM
+    // Using connection count as proxy for network overlap likelihood
+    const targetConnections = targetProfile.connections || 100;
+    const userConnections = userProfile.connections || 100;
+
+    // Higher connections = higher chance of mutual overlap
+    if (targetConnections >= 1000 && userConnections >= 500) {
+        mutualScore = 20;
+        reasons.push(`Large networks (${targetConnections}+ connections) - likely mutual overlap`);
+    } else if (targetConnections >= 500) {
+        mutualScore = 15;
+        reasons.push(`Good network size (${targetConnections} connections)`);
+    } else if (targetConnections >= 200) {
+        mutualScore = 10;
+        reasons.push('Moderate network size');
+    } else {
+        mutualScore = 5;
+        reasons.push('Smaller network');
+    }
+
+    // Bonus if target follows user (from profile data if available)
+    if (targetProfile.followsYou) {
+        mutualScore += 5;
+        reasons.push('Already follows you - warm connection');
+    }
+
+    totalScore += mutualScore;
+    breakdown.networkSize = mutualScore;
+
+    // ========== SCENARIO 3: INDUSTRY NETWORK ACCESS (0-25 points) ==========
+    let industryNetworkScore = 0;
+
+    const userIndustry = userProfile.industry || extractIndustry(userProfile);
+    const targetIndustry = extractIndustry(targetProfile);
+
+    // Same industry = access to relevant network
+    if (userIndustry === targetIndustry) {
+        industryNetworkScore = 25;
+        reasons.push(`Same industry (${targetIndustry}) - relevant network access`);
+    } else {
+        // Related industries
+        const relatedMap = {
+            'Technology': ['Finance', 'Consulting', 'Marketing'],
+            'Finance': ['Technology', 'Consulting'],
+            'Consulting': ['Technology', 'Finance'],
+            'Marketing': ['Technology', 'Design'],
+            'Design': ['Technology', 'Marketing']
+        };
+
+        const related = relatedMap[userIndustry] || [];
+        if (related.includes(targetIndustry)) {
+            industryNetworkScore = 15;
+            reasons.push(`Related industry (${targetIndustry}) - cross-industry opportunities`);
+        } else {
+            industryNetworkScore = 5;
+            reasons.push('Different industry - limited network overlap');
+        }
+    }
+
+    totalScore += industryNetworkScore;
+    breakdown.industryAccess = industryNetworkScore;
+
+    // ========== SCENARIO 4: ACTIVITY & ENGAGEMENT (0-20 points) ==========
+    let engagementScore = 0;
+
+    // Check if target has posts/activity
+    const hasPosts = targetProfile.posts && targetProfile.posts.length > 0;
+    const hasAbout = targetProfile.about && targetProfile.about.length > 100;
+    const hasFeatured = targetProfile.featured && targetProfile.featured.length > 0;
+
+    if (hasPosts) {
+        engagementScore += 10;
+        reasons.push('Active on LinkedIn - more likely to respond');
+    }
+
+    if (hasAbout) {
+        engagementScore += 5;
+        reasons.push('Detailed profile - engaged professional');
+    }
+
+    if (hasFeatured) {
+        engagementScore += 5;
+        reasons.push('Has featured content - thought leader');
+    }
+
+    if (engagementScore === 0) {
+        engagementScore = 5;
+        reasons.push('Basic profile activity');
+    }
+
+    totalScore += engagementScore;
+    breakdown.engagement = engagementScore;
+
+    return {
+        score: Math.min(100, totalScore),
+        breakdown,
+        reasons,
+        summary: generateNetworkSummary(breakdown, totalScore)
+    };
+}
+
+/**
+ * Extract company name from headline
+ */
+function extractCompanyFromHeadline(headline) {
+    if (!headline) return '';
+
+    // Pattern: "Role at Company" or "Role @ Company"
+    const atMatch = headline.match(/(?:at|@)\s+([A-Za-z0-9\s&]+)/i);
+    if (atMatch) {
+        return atMatch[1].trim().split(/[|•·]/)[0].trim();
+    }
+
+    // Pattern: "Role, Company"
+    const commaMatch = headline.match(/,\s+([A-Za-z0-9\s&]+)/);
+    if (commaMatch) {
+        return commaMatch[1].trim().split(/[|•·]/)[0].trim();
+    }
+
+    return '';
+}
+
+/**
+ * Generate human-readable network summary
+ */
+function generateNetworkSummary(breakdown, totalScore) {
+    if (totalScore >= 80) {
+        return 'Excellent networking opportunity! Strong referral potential.';
+    } else if (totalScore >= 60) {
+        return 'Good connection - valuable for industry networking.';
+    } else if (totalScore >= 40) {
+        return 'Moderate value - consider for peer networking.';
+    } else {
+        return 'Limited direct networking value.';
+    }
 }
 
 /**
@@ -411,4 +653,9 @@ function extractProfileMetadata(profileData) {
         experienceYears: estimateExperienceYears(profileData.experience || []),
         seniority: estimateSeniority(estimateExperienceYears(profileData.experience || []))
     };
+}
+
+// Export the new function for use in content.js
+if (typeof window !== 'undefined') {
+    window.calculateNetworkValueEnhanced = calculateNetworkValueEnhanced;
 }
