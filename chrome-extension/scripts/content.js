@@ -1197,14 +1197,11 @@ function showMatchModal(matchData) {
       </div>
       
       <div class="linkedin-match-modal-body" style="margin-top: 16px;">
-        <h3>📋 Summary</h3>
-        <div class="linkedin-match-explanation">
-          ${matchData.explanation.split(' | ').map(factor => `
-            <div class="linkedin-match-explanation-item">
-              <span class="linkedin-match-explanation-icon">•</span>
-              <span class="linkedin-match-explanation-text">${factor}</span>
-            </div>
-          `).join('')}
+        <h3>🎯 Should You Connect?</h3>
+        <div class="linkedin-match-verdict" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 16px; border-radius: 12px; border-left: 4px solid ${matchData.score >= 70 ? '#10a37f' : matchData.score >= 50 ? '#f59e0b' : '#ef4444'};">
+          <p style="margin: 0; line-height: 1.6; font-size: 14px; color: #333;">
+            ${generateConnectionVerdict(matchData)}
+          </p>
         </div>
       </div>
       
@@ -1491,6 +1488,97 @@ function exportMatchData(matchData) {
   a.download = `linkedin-match-${matchData.profileId}-${Date.now()}.json`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Generate a single actionable paragraph explaining why to connect (or not)
+ */
+function generateConnectionVerdict(matchData) {
+  const score = matchData.score || 0;
+  const name = matchData.profileName || 'This person';
+  const headline = matchData.headline || '';
+  const features = matchData.features || {};
+  const targetProfile = matchData.targetProfile || {};
+  const userProfile = matchData.userProfile || {};
+
+  // Extract key data points
+  const targetSkills = targetProfile.skills || [];
+  const userSkills = userProfile.skills || [];
+  const skillOverlap = features.skill_match_score || 50;
+  const careerMatch = features.career_alignment_score || 50;
+  const seniorityMatch = features.seniority_match || 50;
+
+  // Determine connection strength
+  let verdict = '';
+  let action = '';
+  let reason = '';
+
+  // HIGH SCORE (70+): Strong connect recommendation
+  if (score >= 70) {
+    action = `<strong style="color: #10a37f;">✅ YES, CONNECT!</strong>`;
+
+    // Determine the main reason
+    if (skillOverlap >= 70) {
+      reason = `You share strong skill overlap (${Math.round(skillOverlap)}%), making ${name} ideal for peer referrals and collaborative opportunities.`;
+    } else if (seniorityMatch >= 80 && careerMatch >= 70) {
+      reason = `${name} is at a perfect mentorship level for your career stage, and can provide guidance on advancing in your field.`;
+    } else if (targetSkills.length > 0) {
+      const complementarySkills = targetSkills.filter(s => !userSkills.some(us => us.toLowerCase() === s.toLowerCase())).slice(0, 3);
+      reason = complementarySkills.length > 0
+        ? `${name} has complementary skills like ${complementarySkills.join(', ')} that could help you grow professionally.`
+        : `Strong professional alignment suggests mutual value in this connection.`;
+    } else {
+      reason = `High compatibility across career stage, industry, and networking potential.`;
+    }
+
+    // Add referral potential if applicable
+    const company = extractCompanyFromHeadline(headline);
+    if (company) {
+      reason += ` Their role at ${company} could lead to referral opportunities.`;
+    }
+
+    // MEDIUM SCORE (50-69): Consider connecting with context
+  } else if (score >= 50) {
+    action = `<strong style="color: #f59e0b;">⚠️ CONSIDER</strong>`;
+
+    if (skillOverlap >= 50) {
+      reason = `${name} shares some skills with you, which could be useful for industry insights and peer networking. However, the connection may be more casual than career-changing.`;
+    } else if (seniorityMatch >= 60) {
+      reason = `While not a perfect match, ${name} is at a relevant career level for general networking. Consider connecting if you're actively expanding your professional circle.`;
+    } else {
+      reason = `${name} offers moderate networking value. Connect if you're interested in their specific industry or company, but don't expect immediate career benefits.`;
+    }
+
+    // LOW SCORE (below 50): Skip unless specific reason
+  } else {
+    action = `<strong style="color: #ef4444;">❌ SKIP (for now)</strong>`;
+
+    if (skillOverlap < 30 && careerMatch < 40) {
+      reason = `${name} has limited skill overlap and career alignment with you. Your time is better spent connecting with people closer to your professional goals.`;
+    } else if (seniorityMatch < 40) {
+      reason = `The career level gap makes this connection less actionable. Focus on peers or professionals 1-2 levels above you for more relevant networking.`;
+    } else {
+      reason = `This connection is unlikely to provide significant career value. Consider connecting later if your career direction changes or you see them actively posting relevant content.`;
+    }
+
+    // Add exception case
+    if (headline && (headline.toLowerCase().includes('hiring') || headline.toLowerCase().includes('recruiter'))) {
+      action = `<strong style="color: #f59e0b;">⚠️ EXCEPTION: CONNECT</strong>`;
+      reason = `Despite the low score, ${name} appears to be a recruiter or is actively hiring. This overrides the compatibility score—connect if you're job searching!`;
+    }
+  }
+
+  return `${action} — ${reason}`;
+}
+
+/**
+ * Extract company from headline helper
+ */
+function extractCompanyFromHeadline(headline) {
+  if (!headline) return '';
+  const atMatch = headline.match(/(?:at|@)\s+([A-Za-z0-9\s&]+)/i);
+  if (atMatch) return atMatch[1].trim().split(/[|•·]/)[0].trim();
+  return '';
 }
 
 /**
