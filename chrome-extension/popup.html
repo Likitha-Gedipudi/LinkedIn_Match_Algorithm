@@ -157,9 +157,44 @@
     </div>
   </div>
 
+  <!-- Feedback Data Section (NEW) -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="section-icon">📝</span>
+        <h2>Feedback Data</h2>
+      </div>
+    </div>
+
+    <div class="section-content">
+      <p style="font-size: 12px; color: #666; margin-bottom: 12px;">
+        Collected feedback for model validation
+      </p>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-feedback-total">0</div>
+          <div class="stat-label">Total Feedback</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-feedback-useful">0%</div>
+          <div class="stat-label">Marked Useful</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button class="btn btn-primary btn-small" id="btn-export-feedback">
+          📊 Export CSV
+        </button>
+        <button class="btn btn-secondary btn-small" id="btn-clear-feedback">
+          🗑️ Clear
+        </button>
+      </div>
+      <div class="message" id="feedback-message" style="display: none; margin-top: 8px;"></div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <div class="footer">
-    <span class="version">v1.1.0</span>
+    <span class="version">v1.2.0 - Feedback Collection</span>
   </div>
 
   <script src="scripts/popup.js"></script>

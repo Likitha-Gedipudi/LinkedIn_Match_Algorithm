@@ -1208,6 +1208,22 @@ function showMatchModal(matchData) {
         </div>
       </div>
       
+      <div class="linkedin-match-modal-body" style="margin-top: 16px; text-align: center;">
+        <h3>📊 Was this score helpful?</h3>
+        <p style="color: #666; font-size: 12px; margin: 8px 0;">Your feedback helps improve our matching algorithm</p>
+        <div class="linkedin-match-feedback-buttons" style="display: flex; gap: 16px; justify-content: center; margin-top: 12px;">
+          <button class="modal-btn linkedin-match-btn-success" id="modal-feedback-yes" style="padding: 12px 24px; font-size: 16px;">
+            👍 Yes, useful!
+          </button>
+          <button class="modal-btn linkedin-match-btn-danger" id="modal-feedback-no" style="padding: 12px 24px; font-size: 16px;">
+            👎 Not useful
+          </button>
+        </div>
+        <div id="feedback-thank-you" style="display: none; color: #10a37f; font-weight: bold; margin-top: 12px;">
+          ✅ Thank you for your feedback!
+        </div>
+      </div>
+      
       <div class="linkedin-match-modal-footer">
         <button class="modal-btn linkedin-match-btn-secondary" id="modal-export">📊 Export Data</button>
         <button class="modal-btn linkedin-match-btn-primary" id="modal-view-profile">👤 View Profile</button>
@@ -1234,8 +1250,62 @@ function showMatchModal(matchData) {
     modal.remove();
   });
 
+  // FEEDBACK BUTTON HANDLERS
+  modal.querySelector('#modal-feedback-yes').addEventListener('click', async () => {
+    await saveFeedback(matchData, true);
+    showFeedbackThankYou(modal);
+  });
+
+  modal.querySelector('#modal-feedback-no').addEventListener('click', async () => {
+    await saveFeedback(matchData, false);
+    showFeedbackThankYou(modal);
+  });
+
   // Animate in
   setTimeout(() => modal.classList.add('show'), 10);
+}
+
+/**
+ * Save user feedback for model validation
+ */
+async function saveFeedback(matchData, wasUseful) {
+  const feedback = {
+    profileId: matchData.profileId,
+    profileName: matchData.profileName,
+    headline: matchData.headline,
+    score: matchData.score,
+    wasUseful: wasUseful,
+    timestamp: new Date().toISOString(),
+    url: window.location.href
+  };
+
+  console.log('📝 Saving feedback:', feedback);
+
+  try {
+    // Send to background script for storage
+    await chrome.runtime.sendMessage({
+      action: 'saveFeedback',
+      data: feedback
+    });
+    console.log('✅ Feedback saved successfully');
+  } catch (error) {
+    console.error('❌ Error saving feedback:', error);
+    // Fallback: save to local storage directly
+    const existing = JSON.parse(localStorage.getItem('linkedin_match_feedback') || '[]');
+    existing.push(feedback);
+    localStorage.setItem('linkedin_match_feedback', JSON.stringify(existing));
+  }
+}
+
+/**
+ * Show thank you message after feedback
+ */
+function showFeedbackThankYou(modal) {
+  const buttons = modal.querySelector('.linkedin-match-feedback-buttons');
+  const thankYou = modal.querySelector('#feedback-thank-you');
+
+  if (buttons) buttons.style.display = 'none';
+  if (thankYou) thankYou.style.display = 'block';
 }
 
 /**

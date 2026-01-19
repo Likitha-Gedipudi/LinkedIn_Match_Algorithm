@@ -108,6 +108,38 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
+
+  // NEW: Save user feedback for model validation
+  if (request.action === 'saveFeedback') {
+    saveFeedback(request.data)
+      .then(() => sendResponse({ success: true }))
+      .catch(error => sendResponse({ error: error.message }));
+    return true;
+  }
+
+  // NEW: Get all collected feedback
+  if (request.action === 'getFeedback') {
+    getFeedbackData()
+      .then(data => sendResponse({ success: true, data }))
+      .catch(error => sendResponse({ error: error.message }));
+    return true;
+  }
+
+  // NEW: Export feedback as CSV
+  if (request.action === 'exportFeedback') {
+    exportFeedbackAsCSV()
+      .then(csv => sendResponse({ success: true, csv }))
+      .catch(error => sendResponse({ error: error.message }));
+    return true;
+  }
+
+  // NEW: Clear feedback data
+  if (request.action === 'clearFeedback') {
+    chrome.storage.local.remove('userFeedback', () => {
+      sendResponse({ success: true });
+    });
+    return true;
+  }
 });
 
 /**
@@ -542,10 +574,10 @@ async function calculateWithGroq(userProfile, targetProfile) {
   console.log('🤖 ========== GROQ PROXY CALL START ==========');
   console.log('👤 User Profile:', userProfile);
   console.log('🎯 Target Profile:', targetProfile);
-  
+
   try {
     const requestStartTime = Date.now();
-    
+
     // Call our secure proxy server (API key is on server)
     const response = await fetch(`${GROQ_PROXY_URL}/api/compatibility`, {
       method: 'POST',
@@ -557,31 +589,117 @@ async function calculateWithGroq(userProfile, targetProfile) {
         targetProfile: targetProfile
       })
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Proxy server error ${response.status}: ${errorText}`);
     }
-    
+
     const result = await response.json();
     const requestDuration = Date.now() - requestStartTime;
-    
+
     console.log(`⏱️ Proxy Response Time: ${requestDuration}ms`);
     console.log('📥 Proxy Response:', result);
     console.log('🎯 Score:', result.data.compatibility_score);
     console.log('💡 Recommendation:', result.data.recommendation);
     console.log('📋 Explanation:', result.data.explanation);
     console.log('✅ ========== GROQ PROXY CALL SUCCESS ==========\n');
-    
+
     return result;
-    
+
   } catch (error) {
     console.error('❌ ========== GROQ PROXY CALL FAILED ==========');
     console.error('Error:', error.message);
     console.error('Stack:', error.stack);
     console.error('❌ ==========================================\n');
-    
+
     throw error;
   }
+}
+
+// ========== FEEDBACK COLLECTION FOR MODEL VALIDATION ==========
+
+/**
+ * Save user feedback for model validation
+ */
+async function saveFeedback(feedbackData) {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get('userFeedback', (result) => {
+      const feedback = result.userFeedback || [];
+      feedback.push(feedbackData);
+
+      chrome.storage.local.set({ userFeedback: feedback }, () => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          console.log(`📊 Feedback saved. Total: ${feedback.length} samples`);
+          resolve();
+        }
+      });
+    });
+  });
+}
+
+/**
+ * Get all collected feedback data
+ */
+async function getFeedbackData() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get('userFeedback', (result) => {
+      const feedback = result.userFeedback || [];
+
+      // Calculate statistics
+      const total = feedback.length;
+      const useful = feedback.filter(f => f.wasUseful).length;
+      const notUseful = total - useful;
+      const accuracy = total > 0 ? (useful / total * 100).toFixed(1) : 0;
+
+      resolve({
+        feedback,
+        stats: {
+          total,
+          useful,
+          notUseful,
+          accuracy: `${accuracy}%`
+        }
+      });
+    });
+  });
+}
+
+/**
+ * Export feedback as CSV for model training
+ */
+async function exportFeedbackAsCSV() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get('userFeedback', (result) => {
+      const feedback = result.userFeedback || [];
+
+      if (feedback.length === 0) {
+        resolve('No feedback data collected yet.');
+        return;
+      }
+
+      // CSV header
+      const headers = ['profileId', 'profileName', 'headline', 'score', 'wasUseful', 'timestamp', 'url'];
+      const csvRows = [headers.join(',')];
+
+      // CSV data rows
+      feedback.forEach(f => {
+        const row = [
+          f.profileId || '',
+          `"${(f.profileName || '').replace(/"/g, '""')}"`,
+          `"${(f.headline || '').replace(/"/g, '""')}"`,
+          f.score || 0,
+          f.wasUseful ? 1 : 0,
+          f.timestamp || '',
+          f.url || ''
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      resolve(csvRows.join('\n'));
+    });
+  });
 }
 

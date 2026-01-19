@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadUserProfile();
   await loadSettings();
   await loadStats();
+  await loadFeedbackStats();  // NEW: Load feedback data
   setupEventListeners();
 });
 
@@ -115,6 +116,22 @@ async function loadStats() {
 }
 
 /**
+ * Load feedback statistics (NEW)
+ */
+async function loadFeedbackStats() {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ action: 'getFeedback' }, (response) => {
+      if (response && response.success) {
+        const stats = response.data.stats;
+        document.getElementById('stat-feedback-total').textContent = stats.total;
+        document.getElementById('stat-feedback-useful').textContent = stats.accuracy;
+      }
+      resolve();
+    });
+  });
+}
+
+/**
  * Setup event listeners
  */
 function setupEventListeners() {
@@ -156,6 +173,51 @@ function setupEventListeners() {
       showMessage('Cache cleared!', 'success');
     }
   });
+
+  // NEW: Export feedback as CSV
+  document.getElementById('btn-export-feedback').addEventListener('click', async () => {
+    chrome.runtime.sendMessage({ action: 'exportFeedback' }, (response) => {
+      if (response && response.success) {
+        // Download CSV
+        const blob = new Blob([response.csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `linkedin_match_feedback_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showFeedbackMessage('✅ Feedback exported!', 'success');
+      } else {
+        showFeedbackMessage('No feedback data to export', 'error');
+      }
+    });
+  });
+
+  // NEW: Clear feedback data
+  document.getElementById('btn-clear-feedback').addEventListener('click', async () => {
+    if (confirm('Clear all collected feedback data? This cannot be undone.')) {
+      chrome.runtime.sendMessage({ action: 'clearFeedback' }, async (response) => {
+        if (response && response.success) {
+          await loadFeedbackStats();
+          showFeedbackMessage('✅ Feedback cleared!', 'success');
+        }
+      });
+    }
+  });
+}
+
+/**
+ * Show message in feedback section
+ */
+function showFeedbackMessage(text, type) {
+  const messageEl = document.getElementById('feedback-message');
+  messageEl.textContent = text;
+  messageEl.className = `message ${type}`;
+  messageEl.style.display = 'block';
+
+  setTimeout(() => {
+    messageEl.style.display = 'none';
+  }, 3000);
 }
 
 /**
