@@ -22,6 +22,7 @@
         "https://www.linkedin.com/*"
       ],
       "js": [
+        "scripts/keyword-extractor.js",
         "scripts/profile-helpers.js",
         "scripts/content.js"
       ],

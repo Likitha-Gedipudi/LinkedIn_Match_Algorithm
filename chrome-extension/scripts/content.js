@@ -148,21 +148,55 @@ function waitForElement(selector, timeout = 5000) {
 }
 
 /**
- * Extract profile data from LinkedIn page
+ * Extract profile data from LinkedIn page - ENHANCED VERSION
+ * Now extracts: About, Experience (with descriptions), Projects, Posts, Interests
  */
 function extractProfileData() {
+  console.log('🔍 Starting ENHANCED profile extraction...');
+
   const data = {
     profileId: currentProfileId,
     name: extractText('.pv-text-details__left-panel h1, .text-heading-xlarge, h1'),
     headline: extractText('.pv-text-details__left-panel .text-body-medium, .text-body-medium'),
     location: extractText('.pv-text-details__left-panel .text-body-small, .text-body-small'),
     connections: extractConnectionCount(),
-    experience: extractExperience(),
+
+    // ENHANCED: Full About section
+    about: extractAboutSection(),
+
+    // ENHANCED: Experience with descriptions
+    experience: extractExperienceEnhanced(),
+
+    // Skills
     skills: extractSkills(),
-    education: extractEducation()
+
+    // Education
+    education: extractEducation(),
+
+    // ENHANCED: Projects section
+    projects: extractProjects(),
+
+    // ENHANCED: Recent posts/activity
+    posts: extractRecentPosts(),
+
+    // ENHANCED: Interests (followed topics)
+    interests: extractInterests(),
+
+    // ENHANCED: Featured section
+    featured: extractFeatured()
   };
 
-  console.log('Extracted profile data:', data);
+  console.log('✅ ENHANCED profile data extracted:', {
+    name: data.name,
+    headline: data.headline,
+    aboutLength: data.about?.length || 0,
+    experienceCount: data.experience?.length || 0,
+    skillCount: data.skills?.length || 0,
+    projectCount: data.projects?.length || 0,
+    postCount: data.posts?.length || 0,
+    interestCount: data.interests?.length || 0
+  });
+
   return data;
 }
 
@@ -172,45 +206,287 @@ function extractText(selector) {
 }
 
 function extractConnectionCount() {
+  // Try multiple selectors for connection count
+  const selectors = [
+    '.pv-top-card--list li span.t-bold',
+    'a[href*="connections"] span.t-bold',
+    '.pv-top-card--list-bullet li:first-child span'
+  ];
+
+  for (const selector of selectors) {
+    const el = document.querySelector(selector);
+    if (el) {
+      const text = el.textContent.trim();
+      const match = text.match(/(\d+[\+,]*\d*)/);
+      if (match) {
+        return parseInt(match[1].replace(/[+,]/g, '')) || 0;
+      }
+    }
+  }
+
+  // Fallback: search in list items
   const text = extractText('.pv-top-card--list li');
   const match = text.match(/(\d+[\+]?)\s*connections?/i);
   return match ? parseInt(match[1].replace('+', '')) : 0;
 }
 
-function extractExperience() {
+/**
+ * ENHANCED: Extract About section with full text
+ */
+function extractAboutSection() {
+  const aboutSelectors = [
+    '#about ~ div .inline-show-more-text span[aria-hidden="true"]',
+    '#about ~ div .pv-shared-text-with-see-more span[aria-hidden="true"]',
+    '#about + div + div span[aria-hidden="true"]',
+    'section.pv-about-section div.inline-show-more-text',
+    '.pv-shared-text-with-see-more .visually-hidden',
+    '#about ~ div .full-width span'
+  ];
+
+  for (const selector of aboutSelectors) {
+    const el = document.querySelector(selector);
+    if (el && el.textContent.trim().length > 20) {
+      console.log('📝 Found About section with selector:', selector);
+      return el.textContent.trim();
+    }
+  }
+
+  // Fallback: try to find any text container after #about
+  const aboutSection = document.querySelector('#about');
+  if (aboutSection) {
+    const container = aboutSection.closest('section');
+    if (container) {
+      const textEl = container.querySelector('.inline-show-more-text, .pv-shared-text-with-see-more');
+      if (textEl) {
+        return textEl.textContent.trim();
+      }
+    }
+  }
+
+  return '';
+}
+
+/**
+ * ENHANCED: Extract experience with full descriptions
+ */
+function extractExperienceEnhanced() {
   const experiences = [];
-  document.querySelectorAll('#experience ~ div li.artdeco-list__item').forEach(el => {
-    const title = el.querySelector('.mr1.t-bold span')?.textContent.trim();
-    const company = el.querySelector('.t-14.t-normal span')?.textContent.trim();
-    const duration = el.querySelector('.t-14.t-normal.t-black--light span')?.textContent.trim();
+
+  // Try multiple selector patterns for experience items
+  const experienceSelectors = [
+    '#experience ~ div li.artdeco-list__item',
+    'section[id*="experience"] li.artdeco-list__item',
+    '.experience-section li'
+  ];
+
+  let experienceItems = [];
+  for (const selector of experienceSelectors) {
+    experienceItems = document.querySelectorAll(selector);
+    if (experienceItems.length > 0) break;
+  }
+
+  experienceItems.forEach(el => {
+    const title = el.querySelector('.mr1.t-bold span, .t-bold span[aria-hidden="true"]')?.textContent.trim();
+    const company = el.querySelector('.t-14.t-normal span, .pv-entity__secondary-title')?.textContent.trim();
+    const duration = el.querySelector('.t-14.t-normal.t-black--light span, .pv-entity__date-range span:nth-child(2)')?.textContent.trim();
+
+    // ENHANCED: Get experience description
+    const descriptionEl = el.querySelector('.inline-show-more-text span[aria-hidden="true"], .pv-shared-text-with-see-more span');
+    const description = descriptionEl ? descriptionEl.textContent.trim() : '';
+
+    // ENHANCED: Get location
+    const locationEl = el.querySelector('.t-14.t-normal.t-black--light span:last-child');
+    const location = locationEl ? locationEl.textContent.trim() : '';
 
     if (title) {
-      experiences.push({ title, company, duration });
+      experiences.push({
+        title,
+        company,
+        duration,
+        description,
+        location
+      });
     }
   });
+
+  console.log(`📋 Extracted ${experiences.length} experience entries`);
   return experiences;
 }
 
 function extractSkills() {
   const skills = [];
-  document.querySelectorAll('[data-field="skill_card_skill_topic"] .mr1.t-bold span').forEach(el => {
-    skills.push(el.textContent.trim());
-  });
+
+  // Try multiple selectors for skills
+  const skillSelectors = [
+    '[data-field="skill_card_skill_topic"] .mr1.t-bold span',
+    '#skills ~ div .mr1.hoverable-link-text span[aria-hidden="true"]',
+    'section[data-section="skills"] .skill-categories-card span',
+    '.pv-skill-categories-section li span'
+  ];
+
+  for (const selector of skillSelectors) {
+    document.querySelectorAll(selector).forEach(el => {
+      const skill = el.textContent.trim();
+      if (skill && !skills.includes(skill)) {
+        skills.push(skill);
+      }
+    });
+    if (skills.length > 0) break;
+  }
+
+  console.log(`🎯 Extracted ${skills.length} skills`);
   return skills;
 }
 
 function extractEducation() {
   const education = [];
-  document.querySelectorAll('#education ~ div li.artdeco-list__item').forEach(el => {
-    const school = el.querySelector('.mr1.t-bold span')?.textContent.trim();
-    const degree = el.querySelector('.t-14.t-normal span')?.textContent.trim();
+
+  const educationSelectors = [
+    '#education ~ div li.artdeco-list__item',
+    'section[id*="education"] li.artdeco-list__item'
+  ];
+
+  let educationItems = [];
+  for (const selector of educationSelectors) {
+    educationItems = document.querySelectorAll(selector);
+    if (educationItems.length > 0) break;
+  }
+
+  educationItems.forEach(el => {
+    const school = el.querySelector('.mr1.t-bold span, .pv-entity__school-name')?.textContent.trim();
+    const degree = el.querySelector('.t-14.t-normal span, .pv-entity__degree-name span:nth-child(2)')?.textContent.trim();
+    const field = el.querySelector('.pv-entity__fos span:nth-child(2)')?.textContent.trim();
 
     if (school) {
-      education.push({ school, degree });
+      education.push({ school, degree, field });
     }
   });
+
   return education;
 }
+
+/**
+ * NEW: Extract projects section
+ */
+function extractProjects() {
+  const projects = [];
+
+  const projectSelectors = [
+    '#projects ~ div li.artdeco-list__item',
+    'section[id*="projects"] li.artdeco-list__item'
+  ];
+
+  let projectItems = [];
+  for (const selector of projectSelectors) {
+    projectItems = document.querySelectorAll(selector);
+    if (projectItems.length > 0) break;
+  }
+
+  projectItems.forEach(el => {
+    const name = el.querySelector('.mr1.t-bold span')?.textContent.trim();
+    const descriptionEl = el.querySelector('.inline-show-more-text span[aria-hidden="true"], .pv-shared-text-with-see-more span');
+    const description = descriptionEl ? descriptionEl.textContent.trim() : '';
+    const dateRange = el.querySelector('.t-14.t-normal.t-black--light span')?.textContent.trim();
+
+    if (name) {
+      projects.push({ name, description, dateRange });
+    }
+  });
+
+  console.log(`🚀 Extracted ${projects.length} projects`);
+  return projects;
+}
+
+/**
+ * NEW: Extract recent posts/activity
+ */
+function extractRecentPosts() {
+  const posts = [];
+
+  // Activity section selectors
+  const postSelectors = [
+    '.pv-recent-activity-section .feed-shared-update-v2',
+    '[data-test-id="feed-share"] .feed-shared-text',
+    '.profile-creator-shared-feed-update__mini-update'
+  ];
+
+  for (const selector of postSelectors) {
+    document.querySelectorAll(selector).forEach(el => {
+      const content = el.textContent.trim();
+      if (content && content.length > 20) {
+        posts.push({ content: content.substring(0, 500) });
+      }
+    });
+    if (posts.length > 0) break;
+  }
+
+  // Also check for activity indicators
+  const activitySection = document.querySelector('#content_collections, .pv-recent-activity-section');
+  if (activitySection && posts.length === 0) {
+    const activityText = activitySection.textContent.trim();
+    if (activityText.length > 50) {
+      posts.push({ content: activityText.substring(0, 500) });
+    }
+  }
+
+  console.log(`📰 Extracted ${posts.length} recent posts`);
+  return posts;
+}
+
+/**
+ * NEW: Extract interests (followed topics, influencers)
+ */
+function extractInterests() {
+  const interests = [];
+
+  const interestSelectors = [
+    '#interests ~ div .pv-entity__summary-title-text',
+    '#interests ~ div .t-bold span',
+    'section[id*="interests"] .pv-interest-entity-link span',
+    '.pv-interests-section .pv-entity__summary-title'
+  ];
+
+  for (const selector of interestSelectors) {
+    document.querySelectorAll(selector).forEach(el => {
+      const interest = el.textContent.trim();
+      if (interest && !interests.includes(interest)) {
+        interests.push(interest);
+      }
+    });
+    if (interests.length > 0) break;
+  }
+
+  console.log(`💡 Extracted ${interests.length} interests`);
+  return interests;
+}
+
+/**
+ * NEW: Extract featured section
+ */
+function extractFeatured() {
+  const featured = [];
+
+  const featuredSelectors = [
+    '#featured ~ div li',
+    'section[id*="featured"] li.artdeco-carousel__item'
+  ];
+
+  for (const selector of featuredSelectors) {
+    document.querySelectorAll(selector).forEach(el => {
+      const title = el.querySelector('.t-bold span, .pv-featured-item__title')?.textContent.trim();
+      const description = el.querySelector('.t-normal span, .pv-featured-item__subtitle')?.textContent.trim();
+
+      if (title) {
+        featured.push({ title, description });
+      }
+    });
+    if (featured.length > 0) break;
+  }
+
+  console.log(`⭐ Extracted ${featured.length} featured items`);
+  return featured;
+}
+
 
 /**
  * Calculate compatibility features from profile data
@@ -376,7 +652,8 @@ async function scanAndProcessCards() {
 }
 
 /**
- * Inject inline score for a single card
+ * Inject inline score for a single card - ENHANCED VERSION
+ * Now extracts more data from card preview and sends to Groq
  */
 async function injectInlineScoreForCard(card, profileId, profileName, nameElement, headline = '') {
   try {
@@ -408,18 +685,53 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
     const loadingBadge = createInlineScoreBadge('...', 'loading');
     badgeContainer.appendChild(loadingBadge);
 
-    // Generate features (simplified)
-    const features = await calculateFeatures({
-      profileId,
-      connections: 100,
-      skills: [],
-      experience: []
-    });
+    // ENHANCED: Extract more data from card preview
+    const aboutSnippet = card.querySelector('.invitation-card__custom-message, .mn-connection-card__occupation')?.textContent.trim() || '';
+    const mutualConnections = card.querySelector('.member-insights__count, .mutual-connections')?.textContent.trim() || '';
 
-    // Get compatibility score
+    // Extract skills from headline (common pattern: "Role | Skill1 | Skill2 | Skill3")
+    const skillsFromHeadline = extractSkillsFromHeadline(headline);
+
+    // Build a minimal but useful target profile for Groq
+    const targetProfile = {
+      name: profileName,
+      headline: headline,
+      about: aboutSnippet,  // May be connection message or occupation
+      skills: skillsFromHeadline,
+      experience: parseExperienceFromHeadline(headline),
+      connections: mutualConnections.includes('mutual') ? 500 : 100,  // Estimate
+      location: extractLocationFromHeadline(headline),
+      projects: [],
+      posts: [],
+      interests: []
+    };
+
+    // Get user profile
+    const userProfile = await getUserProfile();
+
+    console.log('📊 Card-based scoring for:', profileName);
+    console.log('   Headline:', headline);
+    console.log('   Skills extracted:', skillsFromHeadline);
+    console.log('   Target profile:', targetProfile);
+
+    // Send to Groq via background script
     const response = await chrome.runtime.sendMessage({
       action: 'calculateCompatibility',
-      data: { profileId, ...features }
+      data: {
+        profileId,
+        userProfile: userProfile,
+        targetProfile: targetProfile,
+        // Also include legacy features for fallback
+        skill_match_score: calculateQuickSkillMatch(skillsFromHeadline, userProfile.skills || []),
+        skill_complementarity_score: 50,
+        network_value_a_to_b: 60,
+        network_value_b_to_a: 60,
+        career_alignment_score: 60,
+        experience_gap: 3,
+        industry_match: headline.toLowerCase().includes('data') ? 80 : 50,
+        geographic_score: 50,
+        seniority_match: 60
+      }
     });
 
     // Remove loading badge
@@ -434,8 +746,14 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
         score,
         recommendation: response.data.recommendation,
         explanation: response.data.explanation,
+        actionable_benefits: response.data.actionable_benefits || [],
         fromCache: response.fromCache,
-        features: features  // Include features for detailed breakdown
+        targetProfile: targetProfile,
+        userProfile: {
+          name: userProfile.name,
+          skills: userProfile.skills,
+          headline: userProfile.headline
+        }
       };
 
       // Create clickable badge in the container
@@ -446,6 +764,119 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
     console.error('Error calculating score for card:', error);
   }
 }
+
+/**
+ * Extract skills from headline (e.g., "Senior Data Engineer | AWS | Spark | Python")
+ */
+function extractSkillsFromHeadline(headline) {
+  if (!headline) return [];
+
+  // Common skill keywords to look for
+  const skillKeywords = [
+    'python', 'java', 'javascript', 'sql', 'aws', 'azure', 'gcp', 'docker', 'kubernetes',
+    'spark', 'hadoop', 'airflow', 'kafka', 'tensorflow', 'pytorch', 'react', 'angular',
+    'node', 'django', 'flask', 'machine learning', 'ml', 'ai', 'data science', 'etl',
+    'databricks', 'snowflake', 'tableau', 'power bi', 'excel', 'r', 'scala', 'go',
+    'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'dbt', 'pyspark'
+  ];
+
+  const lowerHeadline = headline.toLowerCase();
+  const foundSkills = [];
+
+  // Check for keywords
+  skillKeywords.forEach(skill => {
+    if (lowerHeadline.includes(skill)) {
+      foundSkills.push(skill.charAt(0).toUpperCase() + skill.slice(1));
+    }
+  });
+
+  // Also split by | and extract tech-looking terms
+  const parts = headline.split(/[|•·,]/);
+  parts.forEach(part => {
+    const trimmed = part.trim();
+    // If it looks like a skill (short, no common words)
+    if (trimmed.length > 1 && trimmed.length < 25 &&
+      !trimmed.toLowerCase().includes('at ') &&
+      !trimmed.toLowerCase().includes('engineer') &&
+      !trimmed.toLowerCase().includes('manager') &&
+      (trimmed.includes('x ') || /^[A-Z0-9]+$/.test(trimmed) || skillKeywords.some(s => trimmed.toLowerCase().includes(s)))) {
+      if (!foundSkills.includes(trimmed)) {
+        foundSkills.push(trimmed);
+      }
+    }
+  });
+
+  return foundSkills.slice(0, 10);
+}
+
+/**
+ * Parse experience info from headline
+ */
+function parseExperienceFromHeadline(headline) {
+  if (!headline) return [];
+
+  const experiences = [];
+
+  // Look for company names (after @ or "at")
+  const atMatch = headline.match(/@\s*([A-Za-z0-9\s]+)/i) || headline.match(/at\s+([A-Za-z0-9\s]+)/i);
+  if (atMatch) {
+    const company = atMatch[1].trim().split(/[|•·]/)[0].trim();
+    // Extract role from before @
+    const roleMatch = headline.match(/^([^@|•·]+)/);
+    const role = roleMatch ? roleMatch[1].trim() : 'Professional';
+
+    experiences.push({
+      title: role,
+      company: company,
+      duration: '',
+      description: ''
+    });
+  }
+
+  return experiences;
+}
+
+/**
+ * Extract location from headline if present
+ */
+function extractLocationFromHeadline(headline) {
+  if (!headline) return '';
+
+  const locationPatterns = [
+    /(?:based in|located in|from)\s+([A-Za-z\s,]+)/i,
+    /([A-Za-z]+,\s*[A-Z]{2})/,  // City, STATE format
+    /(India|USA|UK|Canada|Germany|Australia|Singapore)/i
+  ];
+
+  for (const pattern of locationPatterns) {
+    const match = headline.match(pattern);
+    if (match) return match[1].trim();
+  }
+
+  return '';
+}
+
+/**
+ * Quick skill match calculation for card-based scoring
+ */
+function calculateQuickSkillMatch(targetSkills, userSkills) {
+  if (!targetSkills || !userSkills || targetSkills.length === 0 || userSkills.length === 0) {
+    return 40;
+  }
+
+  const targetLower = targetSkills.map(s => s.toLowerCase());
+  const userLower = userSkills.map(s => s.toLowerCase());
+
+  let matches = 0;
+  targetLower.forEach(skill => {
+    if (userLower.some(us => us.includes(skill) || skill.includes(us))) {
+      matches++;
+    }
+  });
+
+  return Math.min(100, 30 + (matches * 15));
+}
+
 
 /**
  * Analyze profile page - inject badge above Message button

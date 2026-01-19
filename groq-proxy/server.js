@@ -273,74 +273,174 @@ RECOMMENDATION FORMAT:
 Return ONLY the JSON object. No markdown, no explanations.`;
 }
 
-// Helper: Generate user prompt
+// Helper: Generate user prompt - ENHANCED VERSION
 function generateUserPrompt(userProfile, targetProfile) {
-    return `Analyze compatibility between these two LinkedIn professionals in detail:
+    // Extract keywords from About sections
+    const userAboutKeywords = extractKeywordsFromAbout(userProfile.about || '');
+    const targetAboutKeywords = extractKeywordsFromAbout(targetProfile.about || '');
+
+    // Extract keywords from experience descriptions
+    const userExpKeywords = extractKeywordsFromExperience(userProfile.experience || []);
+    const targetExpKeywords = extractKeywordsFromExperience(targetProfile.experience || []);
+
+    return `Analyze compatibility between these two LinkedIn professionals. Focus on HOW the target can help the user.
 
 ═══════════════════════════════════════════════════
-USER PROFILE (Your Profile)
+USER PROFILE (Person seeking connections)
 ═══════════════════════════════════════════════════
 
-BASIC INFORMATION:
-- Full Name: ${userProfile.name || 'Not specified'}
-- Professional Headline: ${userProfile.headline || 'Not specified'}
+BASIC INFO:
+- Name: ${userProfile.name || 'Not specified'}
+- Headline: ${userProfile.headline || 'Not specified'}
 - Location: ${userProfile.location || 'Not specified'}
-- Connection Count: ${userProfile.connections || 'Unknown'}
-
-PROFESSIONAL BACKGROUND:
-- Total Years of Experience: ${userProfile.experienceYears || 'Not specified'}
+- Connections: ${userProfile.connections || 'Unknown'}
+- Experience: ${userProfile.experienceYears || 'Unknown'} years
 - Industry: ${userProfile.industry || 'Not specified'}
-- Career Seniority Level: ${userProfile.seniority || 'Not specified'}
+- Seniority: ${userProfile.seniority || 'Not specified'}
 
-SKILLS (${userProfile.skills?.length || 0} total):
-${userProfile.skills?.length > 0
-            ? userProfile.skills.map((skill, i) => `  ${i + 1}. ${skill}`).join('\n')
-            : '  No skills listed'}
+SKILLS (${userProfile.skills?.length || 0}):
+${userProfile.skills?.slice(0, 15).join(', ') || 'None listed'}
+
+ABOUT SECTION KEYWORDS:
+${userAboutKeywords.join(', ') || 'None extracted'}
+
+EXPERIENCE KEYWORDS:
+${userExpKeywords.join(', ') || 'None extracted'}
 
 ═══════════════════════════════════════════════════
-TARGET PROFILE (Person to Analyze)
+TARGET PROFILE (Person to evaluate for connection)
 ═══════════════════════════════════════════════════
 
-BASIC INFORMATION:
-- Full Name: ${targetProfile.name || 'Not specified'}
-- Professional Headline: ${targetProfile.headline || 'Not specified'}
+BASIC INFO:
+- Name: ${targetProfile.name || 'Not specified'}
+- Headline: ${targetProfile.headline || 'Not specified'}  
 - Location: ${targetProfile.location || 'Not specified'}
-- Connection Count: ${targetProfile.connections || 'Unknown'}
+- Connections: ${targetProfile.connections || 'Unknown'}
 
-PROFESSIONAL BACKGROUND:
-- Total Work Positions: ${targetProfile.experience?.length || 0}
-- Education Background: ${targetProfile.education?.length || 0} degrees/certifications
+ABOUT SECTION (Full Text):
+${(targetProfile.about || 'Not available').substring(0, 800)}
 
-SKILLS (${targetProfile.skills?.length || 0} total):
-${targetProfile.skills?.length > 0
-            ? targetProfile.skills.map((skill, i) => `  ${i + 1}. ${skill}`).join('\n')
-            : '  No skills listed'}
+SKILLS (${targetProfile.skills?.length || 0}):
+${targetProfile.skills?.slice(0, 20).join(', ') || 'None listed'}
 
-EXPERIENCE DETAILS:
-${targetProfile.experience?.length > 0
-            ? targetProfile.experience.slice(0, 5).map((exp, i) => `
-  Position ${i + 1}:
-  - Title: ${exp.title || 'Not specified'}
-  - Company: ${exp.company || 'Not specified'}
-  - Duration: ${exp.duration || 'Not specified'}
-  `).join('\n')
-            : '  No experience details available'}
+EXPERIENCE (${targetProfile.experience?.length || 0} positions):
+${targetProfile.experience?.slice(0, 4).map((exp, i) => `
+  ${i + 1}. ${exp.title || 'Unknown'} at ${exp.company || 'Unknown'} (${exp.duration || 'Unknown'})
+     ${exp.description ? 'Description: ' + exp.description.substring(0, 200) + '...' : ''}
+`).join('') || 'None available'}
 
-OUTPUT FORMAT (JSON ONLY):
+PROJECTS (${targetProfile.projects?.length || 0}):
+${targetProfile.projects?.slice(0, 3).map(p => `- ${p.name}: ${(p.description || '').substring(0, 100)}`).join('\n') || 'None listed'}
+
+INTERESTS:
+${targetProfile.interests?.slice(0, 10).join(', ') || 'None listed'}
+
+RECENT POSTS/ACTIVITY:
+${targetProfile.posts?.slice(0, 2).map(p => `- ${(p.content || '').substring(0, 150)}...`).join('\n') || 'No recent activity'}
+
+ABOUT SECTION KEYWORDS:
+${targetAboutKeywords.join(', ') || 'None extracted'}
+
+EXPERIENCE KEYWORDS:
+${targetExpKeywords.join(', ') || 'None extracted'}
+
+═══════════════════════════════════════════════════
+ANALYSIS REQUIREMENTS
+═══════════════════════════════════════════════════
+
+1. KEYWORD MATCHING (0-25 points):
+   - Compare About section keywords
+   - Compare skills overlap AND complementarity
+   - Compare experience keywords
+   - Match: same field? related technologies? synergistic domains?
+
+2. HOW CAN TARGET HELP USER? (0-25 points):
+   - Mentorship: Can target mentor user based on experience gap?
+   - Skills: What skills can user learn from target?
+   - Network: Can target provide referrals to their company/industry?
+   - Projects: Are target's projects relevant to user's goals?
+
+3. INTEREST & ACTIVITY ALIGNMENT (0-25 points):
+   - Do their interests align for good conversation/connection?
+   - Is target active (posts = engaged = more likely to respond)?
+   - Shared professional interests = stronger connection
+
+4. PROFESSIONAL FIT (0-25 points):
+   - Same/related industry?
+   - Geographic proximity for meetups?
+   - Seniority appropriate for networking?
+   - Career stage compatibility?
+
+═══════════════════════════════════════════════════
+OUTPUT FORMAT (JSON ONLY)
+═══════════════════════════════════════════════════
+
 {
-  "compatibility_score": <precise number 0-100, can be decimal>,
-  "recommendation": "CONNECT - <specific reason>" | "CONSIDER - <specific reason>" | "SKIP - <specific reason>",
-  "explanation": "<factor 1> | <factor 2> | <factor 3> | <factor 4>"
+  "compatibility_score": <0-100>,
+  "recommendation": "<STRONGLY CONNECT/CONNECT/CONSIDER/SKIP> - <one-line reason>",
+  "explanation": "<keyword match insight> | <how they can help you> | <shared interests> | <professional fit>",
+  "actionable_benefits": [
+    "Their experience in [X] can help you with [Y]",
+    "They can teach you [skill] based on their [project/role]",
+    "Connection to [company/industry] could lead to [opportunity]"
+  ]
 }
 
-EXPLANATION GUIDELINES:
-Each factor should be specific and data-driven. Examples:
-✅ GOOD: "15+ overlapping skills including Python, React, and AWS"
-✅ GOOD: "Complementary expertise: User in ML, target in data engineering"  
-✅ GOOD: "3-year experience gap ideal for mentorship relationship"
-✅ GOOD: "Both in San Francisco tech industry with 500+ connections"
+CRITICAL RULES:
+- EXPLANATION must have 4 factors separated by " | "
+- ACTIONABLE_BENEFITS must list 2-3 SPECIFIC ways target helps user
+- Be specific: "Can teach you Kubernetes" not "Good skills"
+- Reference actual data from their profile
+- If no clear benefit, score should be <40
 
-Return ONLY the JSON object. No other text.`;
+Return ONLY the JSON object. No markdown, no explanations.`;
+}
+
+// Helper: Extract keywords from About section
+function extractKeywordsFromAbout(aboutText) {
+    if (!aboutText) return [];
+
+    const technicalKeywords = ['python', 'java', 'javascript', 'react', 'aws', 'docker', 'kubernetes',
+        'machine learning', 'data science', 'sql', 'ai', 'cloud', 'devops', 'api', 'microservices',
+        'tensorflow', 'pytorch', 'spark', 'hadoop', 'nlp', 'deep learning', 'llm', 'gpt'];
+
+    const domainKeywords = ['fintech', 'healthcare', 'e-commerce', 'saas', 'b2b', 'startup',
+        'enterprise', 'consulting', 'banking', 'insurance', 'retail', 'media'];
+
+    const roleKeywords = ['engineer', 'developer', 'scientist', 'analyst', 'manager', 'lead',
+        'architect', 'consultant', 'director', 'founder', 'cto', 'vp'];
+
+    const lowerAbout = aboutText.toLowerCase();
+    const found = [];
+
+    [...technicalKeywords, ...domainKeywords, ...roleKeywords].forEach(kw => {
+        if (lowerAbout.includes(kw)) found.push(kw);
+    });
+
+    return [...new Set(found)].slice(0, 15);
+}
+
+// Helper: Extract keywords from experience descriptions
+function extractKeywordsFromExperience(experiences) {
+    if (!experiences || experiences.length === 0) return [];
+
+    const allText = experiences.map(e =>
+        `${e.title || ''} ${e.company || ''} ${e.description || ''}`
+    ).join(' ').toLowerCase();
+
+    const actionKeywords = ['built', 'developed', 'led', 'managed', 'designed', 'implemented',
+        'scaled', 'optimized', 'automated', 'increased', 'reduced', 'launched', 'created'];
+
+    const techKeywords = ['python', 'java', 'aws', 'kubernetes', 'docker', 'sql', 'react',
+        'node', 'api', 'microservices', 'machine learning', 'data pipeline', 'etl'];
+
+    const found = [];
+
+    [...actionKeywords, ...techKeywords].forEach(kw => {
+        if (allText.includes(kw)) found.push(kw);
+    });
+
+    return [...new Set(found)].slice(0, 15);
 }
 
 // Start server
