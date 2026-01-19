@@ -1182,12 +1182,7 @@ function showMatchModal(matchData) {
         </div>
       </div>
       
-      <div class="linkedin-match-modal-body">
-        <h3>🔍 Profile Comparison</h3>
-        <div class="linkedin-match-comparison">
-          ${comparisonHTML}
-        </div>
-      </div>
+      
       
       <div class="linkedin-match-modal-body">
         <h3>🎯 Score Breakdown & Reasoning</h3>
