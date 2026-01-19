@@ -1201,18 +1201,18 @@ function showMatchModal(matchData) {
       </div>
       
       <div class="linkedin-match-modal-body" style="margin-top: 16px; text-align: center;">
-        <h3>📊 Was this score helpful?</h3>
-        <p style="color: #666; font-size: 12px; margin: 8px 0;">Your feedback helps improve our matching algorithm</p>
+        <h3>🤝 Would you connect with this person?</h3>
+        <p style="color: #666; font-size: 12px; margin: 8px 0;">Your decision helps train the matching algorithm</p>
         <div class="linkedin-match-feedback-buttons" style="display: flex; gap: 16px; justify-content: center; margin-top: 12px;">
           <button class="modal-btn linkedin-match-btn-success" id="modal-feedback-yes" style="padding: 12px 24px; font-size: 16px;">
-            👍 Yes, useful!
+            👍 Yes, Connect!
           </button>
           <button class="modal-btn linkedin-match-btn-danger" id="modal-feedback-no" style="padding: 12px 24px; font-size: 16px;">
-            👎 Not useful
+            👎 No, Skip
           </button>
         </div>
         <div id="feedback-thank-you" style="display: none; color: #10a37f; font-weight: bold; margin-top: 12px;">
-          ✅ Thank you for your feedback!
+          ✅ Got it! Thanks for training the model.
         </div>
       </div>
       
