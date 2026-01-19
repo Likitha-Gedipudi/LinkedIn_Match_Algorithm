@@ -342,6 +342,88 @@ if (typeof window !== 'undefined') {
     window.ROLE_FAMILIES = ROLE_FAMILIES;
 }
 
+// ========== WEIGHTED SCORING SYSTEM ==========
+// Transparent, reproducible scoring with defined weights
+
+/**
+ * Calculate final compatibility score using weighted average
+ * This replaces the black-box LLM scoring with transparent formula
+ * 
+ * @param {Object} features - The features calculated from calculateFeatures()
+ * @returns {Object} { score: number, breakdown: Object, formula: string }
+ */
+function calculateWeightedScore(features) {
+    // Define weights for each factor (must sum to 1.0)
+    const WEIGHTS = {
+        role_family_affinity: 0.25,   // Most important - same field = should connect
+        skill_match: 0.15,             // Direct skill overlap
+        skill_complementarity: 0.10,   // What they can teach you
+        industry_match: 0.15,          // Same industry = referral value
+        career_alignment: 0.10,        // Career stage match
+        seniority_match: 0.10,         // Peer vs mentor value
+        network_strength: 0.10,        // Connection count value
+        geographic_proximity: 0.05     // Least important in remote era
+    };
+
+    // Normalize role_family_bonus from 0-40 to 0-100 scale
+    const roleAffinityNormalized = Math.min(100, (features.role_family_bonus || 0) * 2.5);
+
+    // Extract and normalize all scores (ensure 0-100 range)
+    const scores = {
+        role_family_affinity: roleAffinityNormalized,
+        skill_match: Math.min(100, features.skill_match_score || 50),
+        skill_complementarity: Math.min(100, features.skill_complementarity_score || 40),
+        industry_match: Math.min(100, features.industry_match || 50),
+        career_alignment: Math.min(100, features.career_alignment_score || 60),
+        seniority_match: Math.min(100, features.seniority_match || 70),
+        network_strength: Math.min(100, features.network_value_avg || 50),
+        geographic_proximity: Math.min(100, features.geographic_score || 45)
+    };
+
+    // Calculate weighted score
+    let weightedSum = 0;
+    const contributions = {};
+
+    for (const [factor, weight] of Object.entries(WEIGHTS)) {
+        const contribution = scores[factor] * weight;
+        weightedSum += contribution;
+        contributions[factor] = {
+            rawScore: Math.round(scores[factor]),
+            weight: Math.round(weight * 100) + '%',
+            contribution: Math.round(contribution * 10) / 10
+        };
+    }
+
+    // Final score (0-100)
+    const finalScore = Math.round(weightedSum * 10) / 10;
+
+    // Generate recommendation based on score
+    let recommendation;
+    if (finalScore >= 70) {
+        recommendation = 'HIGHLY RECOMMENDED - Strong professional alignment';
+    } else if (finalScore >= 55) {
+        recommendation = 'RECOMMENDED - Good networking potential';
+    } else if (finalScore >= 40) {
+        recommendation = 'CONSIDER - May have niche value';
+    } else {
+        recommendation = 'SKIP - Limited professional overlap';
+    }
+
+    return {
+        score: finalScore,
+        recommendation,
+        breakdown: contributions,
+        scores: scores,  // Raw scores for display
+        formula: 'Weighted Average: ' + Object.entries(WEIGHTS)
+            .map(([k, v]) => `${k.replace(/_/g, ' ')} (${Math.round(v * 100)}%)`)
+            .join(' + ')
+    };
+}
+
+// Export for use in other scripts
+if (typeof window !== 'undefined') {
+    window.calculateWeightedScore = calculateWeightedScore;
+}
 
 /**
  * Calculate skill match score (overlap)
