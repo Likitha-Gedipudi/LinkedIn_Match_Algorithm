@@ -1014,55 +1014,51 @@ async function analyzeProfileInline(profileId) {
       badgeContainer.appendChild(errorBadge);
       return;
     }
+    // Use Groq API score
+    if (response.success && response.data) {
+      const score = response.data.compatibility_score;
 
-    // REPLACED: Use WEIGHTED SCORE instead of Groq's black-box score
-    // Groq is still used for explanation/recommendation text
-    const weightedResult = calculateWeightedScore(features);
-    const score = weightedResult.score;  // Use our transparent weighted score
+      console.log('🎯 COMPATIBILITY RESULT (GROQ API):');
+      console.log('  Score:', score);
+      console.log('  Recommendation:', response.data.recommendation);
+      console.log('  Explanation:', response.data.explanation);
 
-    console.log('🎯 COMPATIBILITY RESULT (WEIGHTED SCORING):');
-    console.log('  Weighted Score:', score);
-    console.log('  Formula:', weightedResult.formula);
-    console.log('  Breakdown:', weightedResult.breakdown);
-    console.log('  Groq Recommendation:', response.data.recommendation);
-    console.log('  Groq Explanation:', response.data.explanation);
+      const matchData = {
+        profileId,
+        profileName: document.querySelector('h1')?.textContent.trim() || 'Profile',
+        headline: document.querySelector('.text-body-medium')?.textContent.trim() || '',
+        score,
+        recommendation: response.data.recommendation,
+        explanation: response.data.explanation,
+        fromCache: response.fromCache,
+        features: features,  // Include features for detailed breakdown
+        // Add comparison data for UI
+        targetProfile: {
+          name: profileData.name,
+          headline: profileData.headline,
+          skills: profileData.skills || [],
+          experience: profileData.experience || [],
+          connections: profileData.connections,
+          location: profileData.location
+        },
+        userProfile: {
+          name: userProfile.name,
+          headline: userProfile.headline,
+          skills: userProfile.skills || [],
+          experienceYears: userProfile.experienceYears,
+          connections: userProfile.connections,
+          location: userProfile.location,
+          industry: userProfile.industry,
+          seniority: userProfile.seniority
+        }
+      };
 
-    const matchData = {
-      profileId,
-      profileName: document.querySelector('h1')?.textContent.trim() || 'Profile',
-      headline: document.querySelector('.text-body-medium')?.textContent.trim() || '',
-      score,
-      recommendation: weightedResult.recommendation,  // Use our recommendation based on score
-      explanation: response.data.explanation,  // Keep Groq's explanation text
-      fromCache: response.fromCache,
-      features: features,  // Include features for detailed breakdown
-      weightedBreakdown: weightedResult.breakdown,  // NEW: Show contribution of each factor
-      // Add comparison data for UI
-      targetProfile: {
-        name: profileData.name,
-        headline: profileData.headline,
-        skills: profileData.skills || [],
-        experience: profileData.experience || [],
-        connections: profileData.connections,
-        location: profileData.location
-      },
-      userProfile: {
-        name: userProfile.name,
-        headline: userProfile.headline,
-        skills: userProfile.skills || [],
-        experienceYears: userProfile.experienceYears,
-        connections: userProfile.connections,
-        location: userProfile.location,
-        industry: userProfile.industry,
-        seniority: userProfile.seniority
-      }
-    };
+      console.log('✅ ========== PROFILE ANALYSIS COMPLETE ==========\n');
 
-    console.log('✅ ========== PROFILE ANALYSIS COMPLETE ==========\n');
-
-    // Create clickable badge
-    const badge = createClickableScoreBadge(matchData);
-    badgeContainer.appendChild(badge);
+      // Create clickable badge
+      const badge = createClickableScoreBadge(matchData);
+      badgeContainer.appendChild(badge);
+    }
   } catch (error) {
     // Silently handle errors - don't show to user
     if (error.message && !error.message.includes('Extension context invalidated')) {
