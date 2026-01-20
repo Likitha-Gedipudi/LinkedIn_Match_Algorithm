@@ -789,9 +789,46 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
       // Create clickable badge in the container
       const badge = createClickableScoreBadge(matchData);
       badgeContainer.appendChild(badge);
+    } else {
+      // Show error badge if API failed
+      console.warn(`⚠️ API failed for ${profileName}:`, response?.error || 'Unknown error');
+      const errorBadge = document.createElement('span');
+      errorBadge.textContent = '?';
+      errorBadge.title = 'Score unavailable';
+      errorBadge.style.cssText = `
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+        height: 24px;
+        padding: 2px 6px;
+        background: #9ca3af;
+        color: white;
+        border-radius: 12px;
+        font-size: 12px;
+        cursor: help;
+      `;
+      badgeContainer.appendChild(errorBadge);
     }
   } catch (error) {
-    console.error('Error calculating score for card:', error);
+    console.error('Error calculating score for card:', profileName, error);
+    // Show error indicator
+    const errorBadge = document.createElement('span');
+    errorBadge.textContent = '!';
+    errorBadge.title = 'Error: ' + error.message;
+    errorBadge.style.cssText = `
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      background: #dc2626;
+      color: white;
+      border-radius: 12px;
+      font-size: 12px;
+      cursor: help;
+    `;
+    badgeContainer.appendChild(errorBadge);
   }
 }
 
@@ -1137,46 +1174,41 @@ function createClickableScoreBadge(matchData) {
   const scoreClass = getScoreClass(matchData.score);
 
   // Determine colors based on score
-  let bgColor, textColor;
+  let bgColor;
   if (matchData.score >= 70) {
-    bgColor = 'linear-gradient(135deg, #10a37f 0%, #059669 100%)';  // Green
-    textColor = '#ffffff';
+    bgColor = '#10a37f';  // Green
   } else if (matchData.score >= 50) {
-    bgColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';  // Amber
-    textColor = '#ffffff';
+    bgColor = '#f59e0b';  // Amber
   } else {
-    bgColor = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';  // Red
-    textColor = '#ffffff';
+    bgColor = '#ef4444';  // Red
   }
 
   badge.className = `linkedin-match-inline-score ${scoreClass} clickable`;
-  badge.innerHTML = `
-    <span style="font-size: 18px; font-weight: 700;">${matchData.score.toFixed(0)}</span>
-    <span style="font-size: 12px; opacity: 0.9;">Match Score</span>
-  `;
-  badge.title = 'Click to see detailed breakdown';
+  badge.textContent = matchData.score.toFixed(0);  // Just the number
+  badge.title = `${matchData.score.toFixed(0)} Match - Click for details`;
   badge.style.cssText = `
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
+    justify-content: center;
+    min-width: 28px;
+    height: 24px;
+    padding: 2px 8px;
     background: ${bgColor};
-    color: ${textColor};
-    border-radius: 25px;
+    color: white;
+    border-radius: 12px;
     cursor: pointer;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: transform 0.2s, box-shadow 0.2s;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   `;
 
   // Hover effect
   badge.onmouseenter = () => {
-    badge.style.transform = 'scale(1.05)';
-    badge.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.25)';
+    badge.style.transform = 'scale(1.1)';
   };
   badge.onmouseleave = () => {
     badge.style.transform = 'scale(1)';
-    badge.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
   };
 
   // Store match data
