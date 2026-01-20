@@ -628,53 +628,53 @@ async function scanAndProcessCards() {
     }
   });
 
-  console.log(`📋 Processing ${cards.length} unique invitation cards`);
+  console.log(`📋 Processing ${cards.length} unique invitation cards (with rate limit delays)`);
 
-  // Process in batches
-  const batchSize = 3;
-  for (let i = 0; i < cards.length; i += batchSize) {
-    const batch = cards.slice(i, i + batchSize);
+  // Process ONE AT A TIME with delays to avoid Groq API rate limits (429)
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i];
 
-    await Promise.all(batch.map(async (card) => {
-      // Skip if already processed
-      if (card.querySelector('.linkedin-match-badge-container')) {
-        return;
-      }
+    // Skip if already processed
+    if (card.querySelector('.linkedin-match-badge-container')) {
+      continue;
+    }
 
-      // Find profile link
-      const linkElement = card.querySelector('a[href*="/in/"]');
-      if (!linkElement) {
-        console.log('⚠️ No profile link found in card');
-        return;
-      }
+    // Find profile link
+    const linkElement = card.querySelector('a[href*="/in/"]');
+    if (!linkElement) {
+      console.log('⚠️ No profile link found in card');
+      continue;
+    }
 
-      // Extract profile ID
-      const match = linkElement.href.match(/\/in\/([^/?]+)/);
-      if (!match) return;
+    // Extract profile ID
+    const match = linkElement.href.match(/\/in\/([^/?]+)/);
+    if (!match) continue;
 
-      const profileId = match[1];
+    const profileId = match[1];
 
-      // Find name - usually in span with aria-hidden="true" inside the link
-      const nameElement = linkElement.querySelector('span[aria-hidden="true"]') ||
-        linkElement.querySelector('span') ||
-        card.querySelector('strong');
-      const profileName = nameElement ? nameElement.textContent.trim().split('\n')[0] : 'Unknown';
+    // Find name
+    const nameElement = linkElement.querySelector('span[aria-hidden="true"]') ||
+      linkElement.querySelector('span') ||
+      card.querySelector('strong');
+    const profileName = nameElement ? nameElement.textContent.trim().split('\n')[0] : 'Unknown';
 
-      // Find headline - look for secondary text
-      const headlineElement = card.querySelector('[class*="subtitle"], [class*="occupation"], .text-body-small');
-      const headline = headlineElement ? headlineElement.textContent.trim() : '';
+    // Find headline
+    const headlineElement = card.querySelector('[class*="subtitle"], [class*="occupation"], .text-body-small');
+    const headline = headlineElement ? headlineElement.textContent.trim() : '';
 
-      console.log(`📊 Processing: ${profileName} | ${headline.substring(0, 50)}...`);
+    console.log(`📊 [${i + 1}/${cards.length}] Processing: ${profileName}`);
 
-      // Calculate and inject score
-      await injectInlineScoreForCard(card, profileId, profileName, nameElement, headline);
-    }));
+    // Calculate and inject score
+    await injectInlineScoreForCard(card, profileId, profileName, nameElement, headline);
 
-    // Small delay between batches
-    if (i + batchSize < cards.length) {
-      await new Promise(resolve => setTimeout(resolve, 300));
+    // RATE LIMIT DELAY: Wait 2 seconds between each API call to avoid 429 errors
+    if (i < cards.length - 1) {
+      console.log(`⏳ Waiting 2s before next profile (rate limit protection)...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
+
+  console.log(`✅ Finished processing ${cards.length} invitation cards`);
 }
 
 
