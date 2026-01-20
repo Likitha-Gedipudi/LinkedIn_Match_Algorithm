@@ -917,18 +917,32 @@ async function analyzeProfileInline(profileId) {
     const existingBadges = document.querySelectorAll('.linkedin-match-profile-badge');
     existingBadges.forEach(badge => badge.remove());
 
-    // Create badge container to appear next to More button
+    // Find the headline element to place badge below it
+    const headlineElement = document.querySelector('.text-body-medium.break-words');
+
+    // Create badge container - positioned below headline for visibility
     const badgeContainer = document.createElement('div');
     badgeContainer.className = 'linkedin-match-profile-badge';
     badgeContainer.style.cssText = `
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      margin-left: 8px;
-      vertical-align: middle;
+      gap: 8px;
+      margin-top: 12px;
+      margin-bottom: 8px;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      width: fit-content;
     `;
 
-    // Insert badge AFTER the More button
-    moreButton.parentNode.insertBefore(badgeContainer, moreButton.nextSibling);
+    // Insert badge BELOW the headline (or after More button as fallback)
+    if (headlineElement && headlineElement.parentNode) {
+      headlineElement.parentNode.insertBefore(badgeContainer, headlineElement.nextSibling);
+    } else {
+      // Fallback: insert after More button
+      moreButton.parentNode.insertBefore(badgeContainer, moreButton.nextSibling);
+    }
 
     // Show loading badge
     const loadingBadge = createInlineScoreBadge('Analyzing...', 'loading');
@@ -1103,10 +1117,49 @@ async function analyzeProfileFallback(profileId) {
 function createClickableScoreBadge(matchData) {
   const badge = document.createElement('div');
   const scoreClass = getScoreClass(matchData.score);
+
+  // Determine colors based on score
+  let bgColor, textColor;
+  if (matchData.score >= 70) {
+    bgColor = 'linear-gradient(135deg, #10a37f 0%, #059669 100%)';  // Green
+    textColor = '#ffffff';
+  } else if (matchData.score >= 50) {
+    bgColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';  // Amber
+    textColor = '#ffffff';
+  } else {
+    bgColor = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';  // Red
+    textColor = '#ffffff';
+  }
+
   badge.className = `linkedin-match-inline-score ${scoreClass} clickable`;
-  badge.textContent = `${matchData.score.toFixed(0)} Match`;
-  badge.title = 'Click for details';
-  badge.style.cursor = 'pointer';
+  badge.innerHTML = `
+    <span style="font-size: 18px; font-weight: 700;">${matchData.score.toFixed(0)}</span>
+    <span style="font-size: 12px; opacity: 0.9;">Match Score</span>
+  `;
+  badge.title = 'Click to see detailed breakdown';
+  badge.style.cssText = `
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: ${bgColor};
+    color: ${textColor};
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+  `;
+
+  // Hover effect
+  badge.onmouseenter = () => {
+    badge.style.transform = 'scale(1.05)';
+    badge.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.25)';
+  };
+  badge.onmouseleave = () => {
+    badge.style.transform = 'scale(1)';
+    badge.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+  };
 
   // Store match data
   badge.dataset.matchData = JSON.stringify(matchData);
