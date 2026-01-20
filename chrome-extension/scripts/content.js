@@ -604,72 +604,67 @@ async function processNetworkPage() {
  * Scan and process all visible profile cards
  */
 async function scanAndProcessCards() {
-  // Find all invitation cards on the Network page - UPDATED SELECTORS for 2024/2025 LinkedIn
-  const cards = document.querySelectorAll(
-    // Invitation list items
-    'li.invitation-card, ' +
-    'div.invitation-card, ' +
-    '.mn-invitation-list .invitation-card, ' +
-    // Connection cards  
-    '.mn-connection-card, ' +
-    // People you may know
-    '.discover-person-card, ' +
-    // Search results
-    '.reusable-search__result-container, ' +
-    // Generic invitation containers
-    '[data-view-name="invitation-view"], ' +
-    '.artdeco-list__item:has(button[aria-label*="Accept"]), ' +
-    '.artdeco-list__item:has(button[aria-label*="Ignore"])'
-  );
+  // FIXED: More reliable way to find invitation cards
+  // Look for Accept buttons and traverse up to find the card container
+  const acceptButtons = document.querySelectorAll('button[aria-label*="Accept"]');
 
-  console.log(`🔍 Found ${cards.length} profile/invitation cards on Network page`);
+  console.log(`🔍 Found ${acceptButtons.length} Accept buttons on Network page`);
 
-  // Process in batches for better performance
-  const batchSize = 3;  // Smaller batches for invitations
+  // Get unique cards from Accept buttons
+  const cards = [];
+  const processedCards = new Set();
+
+  acceptButtons.forEach(btn => {
+    // Find the card container by traversing up
+    let card = btn.closest('li') || btn.closest('div.artdeco-list__item') || btn.closest('[class*="invitation"]');
+    if (!card) {
+      // Try to find 3-4 levels up from button
+      card = btn.parentElement?.parentElement?.parentElement?.parentElement;
+    }
+
+    if (card && !processedCards.has(card)) {
+      processedCards.add(card);
+      cards.push(card);
+    }
+  });
+
+  console.log(`📋 Processing ${cards.length} unique invitation cards`);
+
+  // Process in batches
+  const batchSize = 3;
   for (let i = 0; i < cards.length; i += batchSize) {
-    const batch = Array.from(cards).slice(i, i + batchSize);
+    const batch = cards.slice(i, i + batchSize);
 
     await Promise.all(batch.map(async (card) => {
       // Skip if already processed
-      if (card.querySelector('.linkedin-match-inline-score, .linkedin-match-badge-container')) {
+      if (card.querySelector('.linkedin-match-badge-container')) {
         return;
       }
 
-      // Extract profile info - try multiple selectors for invitation cards
-      const nameElement = card.querySelector(
-        // Primary name selectors
-        'span.invitation-card__name, ' +
-        '.invitation-card__title strong, ' +
-        'a[href*="/in/"] span[aria-hidden="true"]:first-of-type, ' +
-        '.mn-connection-card__name, ' +
-        '.discover-person-card__name, ' +
-        '.entity-result__title-text a span[aria-hidden="true"]'
-      );
-
+      // Find profile link
       const linkElement = card.querySelector('a[href*="/in/"]');
-
       if (!linkElement) {
         console.log('⚠️ No profile link found in card');
         return;
       }
 
-      // Extract profile ID from link
+      // Extract profile ID
       const match = linkElement.href.match(/\/in\/([^/?]+)/);
       if (!match) return;
 
       const profileId = match[1];
-      const profileName = nameElement ? nameElement.textContent.trim() : 'Unknown';
 
-      // Extract headline/subtitle
-      const headlineElement = card.querySelector(
-        '.invitation-card__subtitle, ' +
-        'span.invitation-card__occupation, ' +
-        '.mn-connection-card__company, ' +
-        '.discover-person-card__occupation'
-      );
+      // Find name - usually in span with aria-hidden="true" inside the link
+      const nameElement = linkElement.querySelector('span[aria-hidden="true"]') ||
+        linkElement.querySelector('span') ||
+        card.querySelector('strong');
+      const profileName = nameElement ? nameElement.textContent.trim().split('\n')[0] : 'Unknown';
+
+      // Find headline - look for secondary text
+      const headlineElement = card.querySelector('[class*="subtitle"], [class*="occupation"], .text-body-small');
       const headline = headlineElement ? headlineElement.textContent.trim() : '';
 
-      console.log(`📊 Processing invitation: ${profileName} | ${headline}`);
+      console.log(`📊 Processing: ${profileName} | ${headline.substring(0, 50)}...`);
 
       // Calculate and inject score
       await injectInlineScoreForCard(card, profileId, profileName, nameElement, headline);
@@ -693,30 +688,24 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
     const oldBadges = card.querySelectorAll('.linkedin-match-badge-container, .linkedin-match-inline-score');
     oldBadges.forEach(badge => badge.remove());
 
-    // Find the best place to insert badge - near the Ignore/Accept buttons
-    const ignoreButton = card.querySelector('button[aria-label*="Ignore"], button:has(span.artdeco-button__text)');
-    const buttonContainer = card.querySelector(
-      '.invitation-card__action-container, ' +
-      'div:has(> button[aria-label*="Accept"]), ' +
-      'div:has(> button[aria-label*="Ignore"]), ' +
-      '.mn-connection-card__action-container'
-    );
+    // Find the Ignore button to place badge before it
+    const ignoreButton = card.querySelector('button[aria-label*="Ignore"]');
+    const acceptButton = card.querySelector('button[aria-label*="Accept"]');
 
-    // Create badge container - styled to appear inline with buttons
-    const badgeContainer = document.createElement('div');
+    // Create badge container
+    const badgeContainer = document.createElement('span');
     badgeContainer.className = 'linkedin-match-badge-container';
     badgeContainer.style.cssText = `
       display: inline-flex;
       align-items: center;
-      margin-right: 8px;
-      vertical-align: middle;
+      margin-right: 12px;
     `;
 
-    // Insert BEFORE the Ignore button (so it appears to the left of buttons)
+    // Insert BEFORE the Ignore button
     if (ignoreButton && ignoreButton.parentNode) {
       ignoreButton.parentNode.insertBefore(badgeContainer, ignoreButton);
-    } else if (buttonContainer) {
-      buttonContainer.insertBefore(badgeContainer, buttonContainer.firstChild);
+    } else if (acceptButton && acceptButton.parentNode) {
+      acceptButton.parentNode.insertBefore(badgeContainer, acceptButton);
     } else {
       // Fallback: append to card
       card.appendChild(badgeContainer);
