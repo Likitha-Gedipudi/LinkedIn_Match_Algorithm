@@ -740,29 +740,54 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
     const userProfile = await getUserProfile();
 
     console.log('📊 Card-based scoring for:', profileName);
-    console.log('   Headline:', headline);
-    console.log('   Skills extracted:', skillsFromHeadline);
-    console.log('   Target profile:', targetProfile);
 
-    // Send to Groq via background script
-    const response = await chrome.runtime.sendMessage({
-      action: 'calculateCompatibility',
-      data: {
-        profileId,
-        userProfile: userProfile,
-        targetProfile: targetProfile,
-        // Also include legacy features for fallback
-        skill_match_score: calculateQuickSkillMatch(skillsFromHeadline, userProfile.skills || []),
-        skill_complementarity_score: 50,
-        network_value_a_to_b: 60,
-        network_value_b_to_a: 60,
-        career_alignment_score: 60,
-        experience_gap: 3,
-        industry_match: headline.toLowerCase().includes('data') ? 80 : 50,
-        geographic_score: 50,
-        seniority_match: 60
+    // RETRY LOGIC: Try up to 3 times with 10-second wait on 429 errors
+    let response = null;
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      try {
+        // Send to Groq via background script
+        response = await chrome.runtime.sendMessage({
+          action: 'calculateCompatibility',
+          data: {
+            profileId,
+            userProfile: userProfile,
+            targetProfile: targetProfile,
+            skill_match_score: calculateQuickSkillMatch(skillsFromHeadline, userProfile.skills || []),
+            skill_complementarity_score: 50,
+            network_value_a_to_b: 60,
+            network_value_b_to_a: 60,
+            career_alignment_score: 60,
+            experience_gap: 3,
+            industry_match: headline.toLowerCase().includes('data') ? 80 : 50,
+            geographic_score: 50,
+            seniority_match: 60
+          }
+        });
+
+        // Check if it's a rate limit error
+        if (response?.error?.includes('429') || response?.error?.includes('rate')) {
+          retryCount++;
+          console.log(`⚠️ Rate limited (429) for ${profileName}. Retry ${retryCount}/${maxRetries} in 10s...`);
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          continue;
+        }
+
+        // Success or other error - break out of retry loop
+        break;
+
+      } catch (error) {
+        retryCount++;
+        if (retryCount < maxRetries) {
+          console.log(`⚠️ Error for ${profileName}. Retry ${retryCount}/${maxRetries} in 10s...`);
+          await new Promise(resolve => setTimeout(resolve, 10000));
+        } else {
+          throw error;
+        }
       }
-    });
+    }
 
     // Remove loading badge
     loadingBadge.remove();
