@@ -604,53 +604,72 @@ async function processNetworkPage() {
  * Scan and process all visible profile cards
  */
 async function scanAndProcessCards() {
-  // Find all profile cards - including invitation cards
+  // Find all invitation cards on the Network page - UPDATED SELECTORS for 2024/2025 LinkedIn
   const cards = document.querySelectorAll(
-    '[data-control-name="invite_card"], ' +
+    // Invitation list items
+    'li.invitation-card, ' +
+    'div.invitation-card, ' +
+    '.mn-invitation-list .invitation-card, ' +
+    // Connection cards  
     '.mn-connection-card, ' +
+    // People you may know
     '.discover-person-card, ' +
+    // Search results
     '.reusable-search__result-container, ' +
-    '.invitation-card, ' +
-    'li.mn-invitation-list__card'
+    // Generic invitation containers
+    '[data-view-name="invitation-view"], ' +
+    '.artdeco-list__item:has(button[aria-label*="Accept"]), ' +
+    '.artdeco-list__item:has(button[aria-label*="Ignore"])'
   );
 
-  console.log(`Found ${cards.length} profile cards`);
+  console.log(`🔍 Found ${cards.length} profile/invitation cards on Network page`);
 
   // Process in batches for better performance
-  const batchSize = 5;
+  const batchSize = 3;  // Smaller batches for invitations
   for (let i = 0; i < cards.length; i += batchSize) {
     const batch = Array.from(cards).slice(i, i + batchSize);
 
     await Promise.all(batch.map(async (card) => {
       // Skip if already processed
-      if (card.querySelector('.linkedin-match-inline-score')) {
+      if (card.querySelector('.linkedin-match-inline-score, .linkedin-match-badge-container')) {
         return;
       }
 
       // Extract profile info - try multiple selectors for invitation cards
       const nameElement = card.querySelector(
+        // Primary name selectors
+        'span.invitation-card__name, ' +
+        '.invitation-card__title strong, ' +
+        'a[href*="/in/"] span[aria-hidden="true"]:first-of-type, ' +
         '.mn-connection-card__name, ' +
         '.discover-person-card__name, ' +
-        '.entity-result__title-text a, ' +
-        'a.app-aware-link span[aria-hidden="true"], ' +
-        '[data-control-name="actor_container"] span[dir="ltr"] span[aria-hidden="true"], ' +
-        '.invitation-card__title'
+        '.entity-result__title-text a span[aria-hidden="true"]'
       );
 
       const linkElement = card.querySelector('a[href*="/in/"]');
 
-      if (!nameElement || !linkElement) return;
+      if (!linkElement) {
+        console.log('⚠️ No profile link found in card');
+        return;
+      }
 
       // Extract profile ID from link
       const match = linkElement.href.match(/\/in\/([^/?]+)/);
       if (!match) return;
 
       const profileId = match[1];
-      const profileName = nameElement.textContent.trim();
+      const profileName = nameElement ? nameElement.textContent.trim() : 'Unknown';
 
-      // Extract additional info for better matching
-      const headlineElement = card.querySelector('.invitation-card__subtitle, [data-control-name="subtitle"]');
+      // Extract headline/subtitle
+      const headlineElement = card.querySelector(
+        '.invitation-card__subtitle, ' +
+        'span.invitation-card__occupation, ' +
+        '.mn-connection-card__company, ' +
+        '.discover-person-card__occupation'
+      );
       const headline = headlineElement ? headlineElement.textContent.trim() : '';
+
+      console.log(`📊 Processing invitation: ${profileName} | ${headline}`);
 
       // Calculate and inject score
       await injectInlineScoreForCard(card, profileId, profileName, nameElement, headline);
@@ -658,10 +677,11 @@ async function scanAndProcessCards() {
 
     // Small delay between batches
     if (i + batchSize < cards.length) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
   }
 }
+
 
 /**
  * Inject inline score for a single card - ENHANCED VERSION
@@ -673,21 +693,30 @@ async function injectInlineScoreForCard(card, profileId, profileName, nameElemen
     const oldBadges = card.querySelectorAll('.linkedin-match-badge-container, .linkedin-match-inline-score');
     oldBadges.forEach(badge => badge.remove());
 
-    // Find the button container (Accept/Ignore buttons)
+    // Find the best place to insert badge - near the Ignore/Accept buttons
+    const ignoreButton = card.querySelector('button[aria-label*="Ignore"], button:has(span.artdeco-button__text)');
     const buttonContainer = card.querySelector(
       '.invitation-card__action-container, ' +
-      '[data-control-name="invite_card_actions"], ' +
-      '.mn-connection-card__action-container, ' +
-      'footer'
+      'div:has(> button[aria-label*="Accept"]), ' +
+      'div:has(> button[aria-label*="Ignore"]), ' +
+      '.mn-connection-card__action-container'
     );
 
-    // Create badge container
+    // Create badge container - styled to appear inline with buttons
     const badgeContainer = document.createElement('div');
     badgeContainer.className = 'linkedin-match-badge-container';
+    badgeContainer.style.cssText = `
+      display: inline-flex;
+      align-items: center;
+      margin-right: 8px;
+      vertical-align: middle;
+    `;
 
-    // Insert BEFORE the button container
-    if (buttonContainer) {
-      buttonContainer.parentNode.insertBefore(badgeContainer, buttonContainer);
+    // Insert BEFORE the Ignore button (so it appears to the left of buttons)
+    if (ignoreButton && ignoreButton.parentNode) {
+      ignoreButton.parentNode.insertBefore(badgeContainer, ignoreButton);
+    } else if (buttonContainer) {
+      buttonContainer.insertBefore(badgeContainer, buttonContainer.firstChild);
     } else {
       // Fallback: append to card
       card.appendChild(badgeContainer);
