@@ -1,0 +1,2 @@
+Model,Test MAE,Test RMSE,Test R²,Train Samples,Test Samples
+Hybrid Neural Network,2.79,3.51,0.8872,7000,1500
