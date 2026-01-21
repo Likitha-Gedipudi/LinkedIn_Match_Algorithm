@@ -1,0 +1,4 @@
+Model,Test Accuracy,Precision,Recall,F1 Score,CV Accuracy
+Logistic Regression,66.7%,83.3%,71.4%,76.9%,74.1%
+Random Forest,77.8%,77.8%,100.0%,87.5%,66.7%
+Gradient Boosting,77.8%,77.8%,100.0%,87.5%,63.0%

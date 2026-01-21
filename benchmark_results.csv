@@ -1,0 +1,7 @@
+Approach,Accuracy
+Majority Class (Always 1),81.5%
+Score >= 40 Threshold,77.8%
+Groq LLM Scoring (threshold=45),77.8%
+Score + Data Keyword Bonus,77.8%
+Score >= 50 Threshold,70.4%
+Random Baseline,55.6%
