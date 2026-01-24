@@ -1580,17 +1580,6 @@ function generateFactorBreakdown(matchData) {
           description: 'Location-based networking opportunities'
         }
       ]
-    },
-    {
-      icon: '🎯',
-      name: 'Role Affinity',
-      factors: [
-        {
-          label: 'Career Path Match',
-          value: Math.min(100, (features.role_family_bonus || 0) * 2.5),  // Scale 0-40 bonus to 0-100%
-          description: features.role_family_reason || 'No role family match detected'
-        }
-      ]
     }
   ];
 
