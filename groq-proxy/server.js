@@ -35,18 +35,193 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// ========== XGBOOST V3 SCORING (12 Factors) ==========
+// Replicates the trained XGBoost model's scoring logic
+
+const PRESTIGIOUS_COMPANIES = ['google', 'meta', 'facebook', 'amazon', 'apple', 'microsoft',
+    'netflix', 'tesla', 'uber', 'airbnb', 'stripe', 'linkedin', 'nvidia', 'adobe', 'salesforce'];
+
+const RELATED_ROLES = {
+    'data_science': ['data_analytics', 'data_engineering', 'software_dev', 'product'],
+    'data_analytics': ['data_science', 'data_engineering', 'product'],
+    'software_dev': ['data_engineering', 'data_science', 'product'],
+    'product': ['data_science', 'software_dev', 'design'],
+    'other': []
+};
+
+// XGBoost v3 weights
+const XGBOOST_WEIGHTS = {
+    mentorship: 0.20,
+    network: 0.16,
+    skill_learning: 0.16,
+    role_synergy: 0.12,
+    goal_alignment: 0.05,
+    alumni: 0.09,
+    career: 0.09,
+    industry: 0.07,
+    geographic: 0.03,
+    engagement: 0.02,
+    rising_star: 0.01
+};
+
+function inferJobCategory(headline = '', about = '') {
+    const text = `${headline} ${about}`.toLowerCase();
+    const categories = {
+        'data_science': ['data scientist', 'machine learning', 'ml engineer', 'ai', 'data science'],
+        'data_analytics': ['data analyst', 'business intelligence', 'bi analyst', 'analytics'],
+        'data_engineering': ['data engineer', 'etl', 'pipeline', 'spark'],
+        'software_dev': ['software engineer', 'developer', 'sde', 'programmer', 'full stack'],
+        'product': ['product manager', 'pm', 'product owner'],
+        'design': ['designer', 'ux', 'ui'],
+        'executive': ['ceo', 'cto', 'director', 'vp']
+    };
+
+    for (const [category, keywords] of Object.entries(categories)) {
+        if (keywords.some(kw => text.includes(kw))) return category;
+    }
+    return 'other';
+}
+
+function inferSeniority(headline = '', yearsExp = 0) {
+    const text = headline.toLowerCase();
+    if (['ceo', 'cto', 'cfo', 'vp', 'director', 'head of'].some(w => text.includes(w))) return 'executive';
+    if (['senior', 'lead', 'principal', 'staff'].some(w => text.includes(w))) return 'senior';
+    if (['junior', 'associate', 'intern'].some(w => text.includes(w)) || yearsExp < 2) return 'entry';
+    return 'mid';
+}
+
+function calculateXGBoostScore(userProfile, targetProfile) {
+    console.log('🧮 Calculating XGBoost v3 score...');
+
+    const scores = {};
+
+    // 1. Mentorship (20%)
+    const userExp = parseInt(userProfile.years_experience) || 0;
+    const targetExp = parseInt(targetProfile.years_experience) || 0;
+    const expGap = targetExp - userExp;
+
+    if (expGap >= 3 && expGap <= 10) scores.mentorship = 100;
+    else if (expGap > 10) scores.mentorship = 70;
+    else if (expGap > 0) scores.mentorship = 60;
+    else scores.mentorship = 20;
+
+    // 2. Network (16%)
+    const targetConn = parseInt(targetProfile.connections) || 0;
+    if (targetConn >= 5000) scores.network = 100;
+    else if (targetConn >= 2000) scores.network = 85;
+    else if (targetConn >= 1000) scores.network = 70;
+    else if (targetConn >= 500) scores.network = 55;
+    else scores.network = 40;
+
+    const company = (targetProfile.company || targetProfile.current_company || '').toLowerCase();
+    if (PRESTIGIOUS_COMPANIES.some(p => company.includes(p))) {
+        scores.network = Math.min(scores.network + 15, 100);
+    }
+
+    // 3. Skill Learning (16%)
+    const userSkills = new Set((userProfile.skills || []).map(s => s.toLowerCase()));
+    const targetSkills = new Set((targetProfile.skills || []).map(s => s.toLowerCase()));
+    const newSkills = [...targetSkills].filter(s => !userSkills.has(s)).length;
+
+    if (newSkills >= 5) scores.skill_learning = 70;
+    else if (newSkills >= 3) scores.skill_learning = 50;
+    else scores.skill_learning = 40;
+
+    // 4. Role Synergy (12%)
+    const userRole = userProfile.job_category || inferJobCategory(userProfile.headline, userProfile.about);
+    const targetRole = targetProfile.job_category || inferJobCategory(targetProfile.headline, targetProfile.about);
+
+    if (userRole === targetRole) scores.role_synergy = 100;
+    else if ((RELATED_ROLES[userRole] || []).includes(targetRole)) scores.role_synergy = 70;
+    else scores.role_synergy = 40;
+
+    // 5. Goal Alignment (5%)
+    const userNeeds = new Set((userProfile.needs || []).map(n => n.toLowerCase()));
+    const targetOffers = new Set((targetProfile.can_offer || []).map(o => o.toLowerCase()));
+
+    if (userNeeds.size > 0 && targetOffers.size > 0) {
+        const overlap = [...userNeeds].filter(n => targetOffers.has(n)).length;
+        scores.goal_alignment = Math.round((overlap / userNeeds.size) * 100) || 50;
+    } else {
+        scores.goal_alignment = 50;
+    }
+
+    // 6. Alumni (9%)
+    const userUni = (userProfile.university || '').toLowerCase();
+    const targetUni = (targetProfile.university || '').toLowerCase();
+    scores.alumni = (userUni && targetUni && (userUni.includes(targetUni) || targetUni.includes(userUni))) ? 100 : 0;
+
+    // 7. Career (9%)
+    const targetSeniority = targetProfile.seniority_level || inferSeniority(targetProfile.headline, targetExp);
+    const seniorityScores = { entry: 30, mid: 50, senior: 75, executive: 95 };
+    scores.career = seniorityScores[targetSeniority] || 30;
+
+    // 8. Industry (7%)
+    const userInd = (userProfile.industry || '').toLowerCase();
+    const targetInd = (targetProfile.industry || '').toLowerCase();
+    scores.industry = (userInd && targetInd && userInd === targetInd) ? 100 : 30;
+
+    // 9. Geographic (3%)
+    const userLoc = (userProfile.location || '').split(',');
+    const targetLoc = (targetProfile.location || '').split(',');
+
+    if (userLoc.length >= 1 && targetLoc.length >= 1) {
+        const userCity = (userLoc[0] || '').trim().toLowerCase();
+        const targetCity = (targetLoc[0] || '').trim().toLowerCase();
+        if (userCity && targetCity && userCity === targetCity) scores.geographic = 100;
+        else if (userLoc.length > 1 && targetLoc.length > 1) {
+            const userState = (userLoc[1] || '').trim().toLowerCase();
+            const targetState = (targetLoc[1] || '').trim().toLowerCase();
+            scores.geographic = (userState && targetState && userState === targetState) ? 70 : 40;
+        } else scores.geographic = 40;
+    } else scores.geographic = 50;
+
+    // 10. Engagement (2%)
+    scores.engagement = parseFloat(targetProfile.engagement_quality_score) || 50;
+
+    // 11. Rising Star (1%)
+    const rising = parseFloat(targetProfile.rising_star_score) || 30;
+    const hidden = parseFloat(targetProfile.undervalued_score) || 30;
+    scores.rising_star = (rising + hidden) / 2;
+
+    // Calculate weighted total
+    let total = 0;
+    for (const [key, weight] of Object.entries(XGBOOST_WEIGHTS)) {
+        total += (scores[key] || 0) * weight;
+    }
+
+    // Apply red flag penalty
+    const redFlag = parseFloat(targetProfile.red_flag_score) || 0;
+    let multiplier = 1.0;
+    if (redFlag > 75) multiplier = 0.80;
+    else if (redFlag > 50) multiplier = 0.90;
+    else if (redFlag > 25) multiplier = 0.95;
+
+    const finalScore = Math.round(total * multiplier * 10) / 10;
+
+    console.log('🎯 XGBoost Score:', finalScore, '/ 100');
+
+    return {
+        score: finalScore,
+        breakdown: scores,
+        multiplier,
+        model: 'xgboost_v3'
+    };
+}
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        groqConfigured: !!process.env.GROQ_API_KEY
+        groqConfigured: !!process.env.GROQ_API_KEY,
+        xgboostEnabled: true
     });
 });
 
-// Main proxy endpoint
+// Main proxy endpoint - HYBRID: XGBoost score + Groq recommendations
 app.post('/api/compatibility', async (req, res) => {
-    console.log('📨 Compatibility request received');
+    console.log('📨 Compatibility request received (HYBRID MODE)');
 
     try {
         const { userProfile, targetProfile } = req.body;
@@ -58,15 +233,31 @@ app.post('/api/compatibility', async (req, res) => {
             });
         }
 
+        // STEP 1: Calculate XGBoost score first
+        console.log('🧮 STEP 1: Calculating XGBoost v3 score...');
+        const xgboostResult = calculateXGBoostScore(userProfile, targetProfile);
+        console.log('✅ XGBoost Score:', xgboostResult.score);
+
+        // STEP 2: Get recommendations from Groq
         if (!process.env.GROQ_API_KEY) {
-            console.error('❌ GROQ_API_KEY not configured');
-            return res.status(500).json({ error: 'Server configuration error' });
+            console.warn('⚠️ GROQ_API_KEY not configured - returning XGBoost only');
+            return res.json({
+                success: true,
+                data: {
+                    compatibility_score: xgboostResult.score,
+                    score_breakdown: xgboostResult.breakdown,
+                    model_source: 'xgboost_v3',
+                    recommendations: ['Configure Groq API key for personalized recommendations'],
+                    connection_tips: ['Based on XGBoost model scoring']
+                },
+                timestamp: Date.now()
+            });
         }
 
-        console.log('🤖 Forwarding to Groq API...');
+        console.log('🤖 STEP 2: Getting Groq recommendations...');
         const startTime = Date.now();
 
-        // Forward request to Groq API
+        // Forward request to Groq API for recommendations (include XGBoost score for context)
         const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -78,15 +269,15 @@ app.post('/api/compatibility', async (req, res) => {
                 messages: [
                     {
                         role: 'system',
-                        content: generateSystemPrompt()
+                        content: generateHybridSystemPrompt()
                     },
                     {
                         role: 'user',
-                        content: generateUserPrompt(userProfile, targetProfile)
+                        content: generateHybridUserPrompt(userProfile, targetProfile, xgboostResult)
                     }
                 ],
                 temperature: 0.5,
-                max_tokens: 800,
+                max_tokens: 600,
                 response_format: { type: 'json_object' }
             })
         });
@@ -97,20 +288,37 @@ app.post('/api/compatibility', async (req, res) => {
         if (!groqResponse.ok) {
             const errorText = await groqResponse.text();
             console.error('❌ Groq API error:', errorText);
-            return res.status(groqResponse.status).json({
-                error: `Groq API error: ${groqResponse.status}`
+            // Fall back to XGBoost only
+            return res.json({
+                success: true,
+                data: {
+                    compatibility_score: xgboostResult.score,
+                    score_breakdown: xgboostResult.breakdown,
+                    model_source: 'xgboost_v3',
+                    recommendations: ['Unable to get AI recommendations at this time'],
+                    connection_tips: ['Score calculated by XGBoost model']
+                },
+                timestamp: Date.now()
             });
         }
 
         const data = await groqResponse.json();
-        const result = JSON.parse(data.choices[0].message.content);
+        const groqResult = JSON.parse(data.choices[0].message.content);
 
-        console.log('✅ Compatibility calculated:', result.compatibility_score);
+        console.log('✅ HYBRID result ready - XGBoost score:', xgboostResult.score);
 
-        // Return result to extension
+        // COMBINE: XGBoost score + Groq recommendations
         res.json({
             success: true,
-            data: result,
+            data: {
+                compatibility_score: xgboostResult.score,  // FROM XGBOOST
+                score_breakdown: xgboostResult.breakdown,  // FROM XGBOOST
+                model_source: 'hybrid_xgboost_groq',
+                recommendations: groqResult.recommendations || [],  // FROM GROQ
+                connection_tips: groqResult.connection_tips || [],  // FROM GROQ
+                match_summary: groqResult.match_summary || '',  // FROM GROQ
+                groq_score: groqResult.compatibility_score  // Optional: Groq's score for comparison
+            },
             timestamp: Date.now()
         });
 
@@ -443,9 +651,71 @@ function extractKeywordsFromExperience(experiences) {
     return [...new Set(found)].slice(0, 15);
 }
 
+// ========== HYBRID PROMPTS (For Groq Recommendations) ==========
+
+function generateHybridSystemPrompt() {
+    return `You are an expert LinkedIn networking advisor. The compatibility score has ALREADY been calculated by our XGBoost ML model. 
+
+Your job is ONLY to provide:
+1. Personalized recommendations on how to approach this connection
+2. Specific connection tips based on profile analysis
+3. A brief match summary
+
+DO NOT calculate or suggest a different score - use the provided XGBoost score as truth.
+
+Respond in JSON format:
+{
+    "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"],
+    "connection_tips": ["tip 1", "tip 2"],
+    "match_summary": "Brief 1-2 sentence summary of why this person is a good/bad connection"
+}`;
+}
+
+function generateHybridUserPrompt(userProfile, targetProfile, xgboostResult) {
+    return `Based on this XGBoost ML model analysis, provide personalized networking recommendations.
+
+═══ XGBOOST MODEL RESULTS (Already Calculated) ═══
+Compatibility Score: ${xgboostResult.score}/100
+Score Breakdown:
+- Mentorship Potential: ${xgboostResult.breakdown.mentorship || 0}/100
+- Network Value: ${xgboostResult.breakdown.network || 0}/100
+- Skill Learning: ${xgboostResult.breakdown.skill_learning || 0}/100
+- Role Synergy: ${xgboostResult.breakdown.role_synergy || 0}/100
+- Goal Alignment: ${xgboostResult.breakdown.goal_alignment || 0}/100
+- Alumni Connection: ${xgboostResult.breakdown.alumni || 0}/100
+- Career Advancement: ${xgboostResult.breakdown.career || 0}/100
+- Industry Match: ${xgboostResult.breakdown.industry || 0}/100
+- Geographic: ${xgboostResult.breakdown.geographic || 0}/100
+
+═══ USER PROFILE ═══
+Name: ${userProfile.name || 'User'}
+Headline: ${userProfile.headline || 'Not specified'}
+Skills: ${(userProfile.skills || []).slice(0, 10).join(', ')}
+Industry: ${userProfile.industry || 'Not specified'}
+Experience: ${userProfile.years_experience || userProfile.experienceYears || '?'} years
+
+═══ TARGET PROFILE ═══
+Name: ${targetProfile.name || 'Target'}
+Headline: ${targetProfile.headline || 'Not specified'}
+Company: ${targetProfile.company || targetProfile.current_company || 'Not specified'}
+Skills: ${(targetProfile.skills || []).slice(0, 10).join(', ')}
+Industry: ${targetProfile.industry || 'Not specified'}
+Experience: ${targetProfile.years_experience || targetProfile.experienceYears || '?'} years
+Location: ${targetProfile.location || 'Not specified'}
+
+Based on this analysis, provide:
+1. 3 specific recommendations for connecting with this person
+2. 2 connection tips (conversation starters, common ground)
+3. A brief match summary
+
+Focus on ACTIONABLE advice. Reference specific profile data. Be concise.`;
+}
+
 // Start server
 app.listen(PORT, () => {
     console.log(`🚀 Groq Proxy Server running on port ${PORT}`);
-    console.log(`🔑 API Key configured: ${!!process.env.GROQ_API_KEY}`);
+    console.log(`🧮 XGBoost v3 scoring: ENABLED`);
+    console.log(`🔑 Groq API Key configured: ${!!process.env.GROQ_API_KEY}`);
     console.log(`🌐 Health check: http://localhost:${PORT}/health`);
 });
+
