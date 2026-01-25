@@ -1,13 +1,12 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn Professional Match AI",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Enterprise AI-powered professional networking compatibility scorer for LinkedIn",
   "permissions": [
     "storage",
     "activeTab",
-    "tabs",
-    "scripting"
+    "tabs"
   ],
   "host_permissions": [
     "https://www.linkedin.com/*",
